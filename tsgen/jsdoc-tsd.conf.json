@@ -9,12 +9,15 @@
     "source": {
         "include": [
             "../../phaser/src/",
-            "../../phaser/plugins/fbinstant"
+            "../../phaser/plugins/fbinstant",
+            "../../phaser/plugins/spine/src"
+
         ],
         "exclude": [
             "../../phaser/src/physics/matter-js/lib",
             "../../phaser/src/physics/matter-js/poly-decomp",
-            "../../phaser/src/polyfills"
+            "../../phaser/src/polyfills",
+            "../../phaser/plugins/spine/src/runtimes"
         ],
         "includePattern": ".+\\.js?$",
         "excludePattern": "(^|\\/|\\\\)_"
