@@ -87,13 +87,13 @@ export class Parser {
                 case "Phaser.GameObjects.Components.Pipeline":
                 case "Phaser.GameObjects.Components.ScaleMode":
                 case "Phaser.GameObjects.Components.ScrollFactor":
-                case "Phaser.GameObjects.Components.ScaleFactor":
                 case "Phaser.GameObjects.Components.Size":
                 case "Phaser.GameObjects.Components.Texture":
                 case "Phaser.GameObjects.Components.TextureCrop":
                 case "Phaser.GameObjects.Components.Tint":
                 case "Phaser.GameObjects.Components.ToJSON":
                 case "Phaser.GameObjects.Components.Transform":
+                case "Phaser.GameObjects.Components.TransformMatrix":
                 case "Phaser.GameObjects.Components.Visible":
                     doclet.kind = "mixin";
                     break;

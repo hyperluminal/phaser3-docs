@@ -13595,119 +13595,80 @@ declare namespace Phaser {
                 getWorldTransformMatrix(tempMatrix?: Phaser.GameObjects.Components.TransformMatrix, parentMatrix?: Phaser.GameObjects.Components.TransformMatrix): Phaser.GameObjects.Components.TransformMatrix;
             }
 
-            /**
-             * A Matrix used for display transformations for rendering.
-             * 
-             * It is represented like so:
-             * 
-             * ```
-             * | a | c | tx |
-             * | b | d | ty |
-             * | 0 | 0 | 1  |
-             * ```
-             */
-            class TransformMatrix {
-                /**
-                 * 
-                 * @param a The Scale X value. Default 1.
-                 * @param b The Shear Y value. Default 0.
-                 * @param c The Shear X value. Default 0.
-                 * @param d The Scale Y value. Default 1.
-                 * @param tx The Translate X value. Default 0.
-                 * @param ty The Translate Y value. Default 0.
-                 */
-                constructor(a?: number, b?: number, c?: number, d?: number, tx?: number, ty?: number);
-
+            interface TransformMatrix {
                 /**
                  * The matrix values.
                  */
                 matrix: Float32Array;
-
                 /**
                  * The decomposed matrix.
                  */
                 decomposedMatrix: object;
-
                 /**
                  * The Scale X value.
                  */
                 a: number;
-
                 /**
                  * The Shear Y value.
                  */
                 b: number;
-
                 /**
                  * The Shear X value.
                  */
                 c: number;
-
                 /**
                  * The Scale Y value.
                  */
                 d: number;
-
                 /**
                  * The Translate X value.
                  */
                 e: number;
-
                 /**
                  * The Translate Y value.
                  */
                 f: number;
-
                 /**
                  * The Translate X value.
                  */
                 tx: number;
-
                 /**
                  * The Translate Y value.
                  */
                 ty: number;
-
                 /**
                  * The rotation of the Matrix.
                  */
                 readonly rotation: number;
-
                 /**
                  * The horizontal scale of the Matrix.
                  */
                 readonly scaleX: number;
-
                 /**
                  * The vertical scale of the Matrix.
                  */
                 readonly scaleY: number;
-
                 /**
                  * Reset the Matrix to an identity matrix.
                  */
                 loadIdentity(): this;
-
                 /**
                  * Translate the Matrix.
                  * @param x The horizontal translation value.
                  * @param y The vertical translation value.
                  */
                 translate(x: number, y: number): this;
-
                 /**
                  * Scale the Matrix.
                  * @param x The horizontal scale value.
                  * @param y The vertical scale value.
                  */
                 scale(x: number, y: number): this;
-
                 /**
                  * Rotate the Matrix.
                  * @param angle The angle of rotation in radians.
                  */
                 rotate(angle: number): this;
-
                 /**
                  * Multiply this Matrix by the given Matrix.
                  * 
@@ -13718,7 +13679,6 @@ declare namespace Phaser {
                  * @param out An optional Matrix to store the results in.
                  */
                 multiply(rhs: Phaser.GameObjects.Components.TransformMatrix, out?: Phaser.GameObjects.Components.TransformMatrix): Phaser.GameObjects.Components.TransformMatrix;
-
                 /**
                  * Multiply this Matrix by the matrix given, including the offset.
                  * 
@@ -13729,7 +13689,6 @@ declare namespace Phaser {
                  * @param offsetY Vertical offset to factor in to the multiplication.
                  */
                 multiplyWithOffset(src: Phaser.GameObjects.Components.TransformMatrix, offsetX: number, offsetY: number): this;
-
                 /**
                  * Transform the Matrix.
                  * @param a The Scale X value.
@@ -13740,7 +13699,6 @@ declare namespace Phaser {
                  * @param ty The Translate Y value.
                  */
                 transform(a: number, b: number, c: number, d: number, tx: number, ty: number): this;
-
                 /**
                  * Transform a point using this Matrix.
                  * @param x The x coordinate of the point to transform.
@@ -13748,39 +13706,33 @@ declare namespace Phaser {
                  * @param point The Point object to store the transformed coordinates.
                  */
                 transformPoint(x: number, y: number, point: Phaser.Geom.Point | Phaser.Math.Vector2 | object): Phaser.Geom.Point | Phaser.Math.Vector2 | object;
-
                 /**
                  * Invert the Matrix.
                  */
                 invert(): this;
-
                 /**
                  * Set the values of this Matrix to copy those of the matrix given.
                  * @param src The source Matrix to copy from.
                  */
                 copyFrom(src: Phaser.GameObjects.Components.TransformMatrix): this;
-
                 /**
                  * Set the values of this Matrix to copy those of the array given.
                  * Where array indexes 0, 1, 2, 3, 4 and 5 are mapped to a, b, c, d, e and f.
                  * @param src The array of values to set into this matrix.
                  */
                 copyFromArray(src: any[]): this;
-
                 /**
                  * Copy the values from this Matrix to the given Canvas Rendering Context.
                  * This will use the Context.transform method.
                  * @param ctx The Canvas Rendering Context to copy the matrix values to.
                  */
                 copyToContext(ctx: CanvasRenderingContext2D): CanvasRenderingContext2D;
-
                 /**
                  * Copy the values from this Matrix to the given Canvas Rendering Context.
                  * This will use the Context.setTransform method.
                  * @param ctx The Canvas Rendering Context to copy the matrix values to.
                  */
                 setToContext(ctx: CanvasRenderingContext2D): CanvasRenderingContext2D;
-
                 /**
                  * Copy the values in this Matrix to the array given.
                  * 
@@ -13788,7 +13740,6 @@ declare namespace Phaser {
                  * @param out The array to copy the matrix values in to.
                  */
                 copyToArray(out?: any[]): any[];
-
                 /**
                  * Set the values of this Matrix.
                  * @param a The Scale X value.
@@ -13799,7 +13750,6 @@ declare namespace Phaser {
                  * @param ty The Translate Y value.
                  */
                 setTransform(a: number, b: number, c: number, d: number, tx: number, ty: number): this;
-
                 /**
                  * Decompose this Matrix into its translation, scale and rotation values using QR decomposition.
                  * 
@@ -13808,7 +13758,6 @@ declare namespace Phaser {
                  * translate -> rotate -> scale
                  */
                 decomposeMatrix(): object;
-
                 /**
                  * Apply the identity, translate, rotate and scale operations on the Matrix.
                  * @param x The horizontal translation.
@@ -13818,7 +13767,6 @@ declare namespace Phaser {
                  * @param scaleY The vertical scale.
                  */
                 applyITRS(x: number, y: number, rotation: number, scaleX: number, scaleY: number): this;
-
                 /**
                  * Takes the `x` and `y` values and returns a new position in the `output` vector that is the inverse of
                  * the current matrix with its transformation applied.
@@ -13829,7 +13777,6 @@ declare namespace Phaser {
                  * @param output A Vector2, or point-like object, to store the results in.
                  */
                 applyInverse(x: number, y: number, output?: Phaser.Math.Vector2): Phaser.Math.Vector2;
-
                 /**
                  * Returns the X component of this matrix multiplied by the given values.
                  * This is the same as `x * a + y * c + e`.
@@ -13837,7 +13784,6 @@ declare namespace Phaser {
                  * @param y The y value.
                  */
                 getX(x: number, y: number): number;
-
                 /**
                  * Returns the Y component of this matrix multiplied by the given values.
                  * This is the same as `x * b + y * d + f`.
@@ -13845,17 +13791,14 @@ declare namespace Phaser {
                  * @param y The y value.
                  */
                 getY(x: number, y: number): number;
-
                 /**
                  * Returns a string that can be used in a CSS Transform call as a `matrix` property.
                  */
                 getCSSMatrix(): string;
-
                 /**
                  * Destroys this Transform Matrix.
                  */
                 destroy(): void;
-
             }
 
             /**
@@ -15974,7 +15917,7 @@ declare namespace Phaser {
              * in your game code), but could also be a string, or any other data-type. It is recommended to keep it light and simple.
              * If you need to store complex data about your Game Object, look at using the Data Component instead.
              */
-            state: any;
+            state: integer | string;
 
             /**
              * The parent Container of this Game Object, if it has one.
@@ -23869,6 +23812,49 @@ declare namespace Phaser {
              * Clears the Render Texture.
              */
             clear(): this;
+
+            /**
+             * Draws the given object, or an array of objects, to this Render Texture using a blend mode of ERASE.
+             * This has the effect of erasing any filled pixels in the objects from this Render Texture.
+             * 
+             * It can accept any of the following:
+             * 
+             * * Any renderable Game Object, such as a Sprite, Text, Graphics or TileSprite.
+             * * Dynamic and Static Tilemap Layers.
+             * * A Group. The contents of which will be iterated and drawn in turn.
+             * * A Container. The contents of which will be iterated fully, and drawn in turn.
+             * * A Scene's Display List. Pass in `Scene.children` to draw the whole list.
+             * * Another Render Texture.
+             * * A Texture Frame instance.
+             * * A string. This is used to look-up a texture from the Texture Manager.
+             * 
+             * Note: You cannot erase a Render Texture from itself.
+             * 
+             * If passing in a Group or Container it will only draw children that return `true`
+             * when their `willRender()` method is called. I.e. a Container with 10 children,
+             * 5 of which have `visible=false` will only draw the 5 visible ones.
+             * 
+             * If passing in an array of Game Objects it will draw them all, regardless if
+             * they pass a `willRender` check or not.
+             * 
+             * You can pass in a string in which case it will look for a texture in the Texture
+             * Manager matching that string, and draw the base frame.
+             * 
+             * You can pass in the `x` and `y` coordinates to draw the objects at. The use of
+             * the coordinates differ based on what objects are being drawn. If the object is
+             * a Group, Container or Display List, the coordinates are _added_ to the positions
+             * of the children. For all other types of object, the coordinates are exact.
+             * 
+             * Calling this method causes the WebGL batch to flush, so it can write the texture
+             * data to the framebuffer being used internally. The batch is flushed at the end,
+             * after the entries have been iterated. So if you've a bunch of objects to draw,
+             * try and pass them in an array in one single call, rather than making lots of
+             * separate calls.
+             * @param entries Any renderable Game Object, or Group, Container, Display List, other Render Texture, Texture Frame or an array of any of these.
+             * @param x The x position to draw the Frame at, or the offset applied to the object.
+             * @param y The y position to draw the Frame at, or the offset applied to the object.
+             */
+            erase(entries: any, x?: number, y?: number): this;
 
             /**
              * Draws the given object, or an array of objects, to this Render Texture.
@@ -59683,6 +59669,10 @@ declare namespace Phaser {
          * Luminosity blend mode.
          */
         LUMINOSITY,
+        /**
+         * Alpha erase blend mode.
+         */
+        ERASE,
     }
 
     namespace Renderer {
