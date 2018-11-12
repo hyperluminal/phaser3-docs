@@ -17045,9 +17045,10 @@ declare namespace Phaser {
              * @param x The horizontal position of this Game Object.
              * @param y The vertical position of this Game Object.
              * @param texture The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
-             * @param frame An optional frame from the Texture this Game Object is rendering with.
+             * @param animationName The animation to load with.
+             * @param loop Loop the loaded animation?
              */
-            spineFactory(x: number, y: number, texture: string, frame?: string | integer): Phaser.GameObjects.SpineGameObject;
+            spineFactory(x: number, y: number, texture: string, animationName?: string | integer, loop?: boolean): Phaser.GameObjects.SpineGameObject;
 
             /**
              * Creates a new Spine Game Object Game Object and adds it to the Scene.
