@@ -710,14 +710,6 @@ declare type GameConfig = {
     plugins?: PluginObject | PluginObjectItem[];
 };
 
-declare namespace module {
-    /**
-     * "Computers are good at following instructions, but not at reading your mind." - Donald Knuth
-     */
-    var exports: any;
-
-}
-
 declare type TimeStepCallback = (time: number, average: number, interpolation: number)=>void;
 
 declare type JSONCameraBounds = {
@@ -42309,33 +42301,33 @@ declare namespace Phaser {
                  */
                 key: string;
                 /**
-                 * The absolute or relative URL to load the texture image file from.
+                 * The absolute or relative URL to load the spine json file from.
                  */
-                textureURL?: string;
+                jsonURL?: string;
                 /**
                  * The default file extension to use for the image texture if no url is provided.
                  */
                 textureExtension?: string;
                 /**
-                 * Extra XHR Settings specifically for the texture image file.
+                 * Extra XHR Settings specifically for the spine json file.
                  */
-                textureXhrSettings?: XHRSettingsObject;
+                jsonXhrSettings?: XHRSettingsObject;
                 /**
-                 * The filename of an associated normal map. It uses the same path and url to load as the texture image.
-                 */
-                normalMap?: string;
-                /**
-                 * The absolute or relative URL to load the atlas data file from.
+                 * The absolute or relative URL to load the spine atlas file from.
                  */
                 atlasURL?: string;
                 /**
-                 * The default file extension to use for the atlas data if no url is provided.
+                 * The default file extension to use for the spine atlas if no url is provided.
                  */
                 atlasExtension?: string;
                 /**
-                 * Extra XHR Settings specifically for the atlas data file.
+                 * Extra XHR Settings specifically for the spine atlas file.
                  */
                 atlasXhrSettings?: XHRSettingsObject;
+                /**
+                 * The path to use when loading the textures defined in the spine atlas file.
+                 */
+                path?: string;
             };
 
             /**
@@ -42350,12 +42342,13 @@ declare namespace Phaser {
                  * 
                  * @param loader A reference to the Loader that is responsible for this file.
                  * @param key The key to use for this file, or a file configuration object.
-                 * @param textureURL The absolute or relative URL to load the texture image file from. If undefined or `null` it will be set to `<key>.png`, i.e. if `key` was "alien" then the URL will be "alien.png".
-                 * @param atlasURL The absolute or relative URL to load the texture atlas data file from. If undefined or `null` it will be set to `<key>.txt`, i.e. if `key` was "alien" then the URL will be "alien.txt".
-                 * @param textureXhrSettings An XHR Settings configuration object for the atlas image file. Used in replacement of the Loaders default XHR Settings.
-                 * @param atlasXhrSettings An XHR Settings configuration object for the atlas data file. Used in replacement of the Loaders default XHR Settings.
+                 * @param jsonURL The absolute or relative URL to load the json file from. If undefined or `null` it will be set to `<key>.png`, i.e. if `key` was "alien" then the URL will be "alien.png".
+                 * @param atlasURL The absolute or relative URL to load the spine atlas file from. If undefined or `null` it will be set to `<key>.txt`, i.e. if `key` was "alien" then the URL will be "alien.txt".
+                 * @param path The path to use when loading the textures defined in the spine atlas.
+                 * @param jsonXhrSettings An XHR Settings configuration object for the spine json file. Used in replacement of the Loaders default XHR Settings.
+                 * @param atlasXhrSettings An XHR Settings configuration object for the spine atlas file. Used in replacement of the Loaders default XHR Settings.
                  */
-                constructor(loader: Phaser.Loader.LoaderPlugin, key: string | Phaser.Loader.FileTypes.UnityAtlasFileConfig, textureURL?: string | string[], atlasURL?: string, textureXhrSettings?: XHRSettingsObject, atlasXhrSettings?: XHRSettingsObject);
+                constructor(loader: Phaser.Loader.LoaderPlugin, key: string | Phaser.Loader.FileTypes.UnityAtlasFileConfig, jsonURL?: string | string[], atlasURL?: string, path?: string, jsonXhrSettings?: XHRSettingsObject, atlasXhrSettings?: XHRSettingsObject);
 
                 /**
                  * Adds this file to its target cache upon successful loading and processing.
@@ -44670,14 +44663,14 @@ declare namespace Phaser {
             reset(): void;
 
             /**
-             * Adds a Unity YAML based Texture Atlas, or array of atlases, to the current load queue.
+             * Adds a spine objects to the current load queue, consisting of json file, atlas file & textures.
              * 
              * You can call this method from within your Scene's `preload`, along with any other files you wish to load:
              * 
              * ```javascript
              * function preload ()
              * {
-             *     this.load.unityAtlas('mainmenu', 'images/MainMenu.png', 'images/MainMenu.txt');
+             *     this.load.spine('spineboy', 'spine/sb/spineboy.json', 'spine/spineboy.atlas', 'spine/sb/' );
              * }
              * ```
              * 
@@ -44692,7 +44685,7 @@ declare namespace Phaser {
              * If you call this from outside of `preload` then you are responsible for starting the Loader afterwards and monitoring
              * its events to know when it's safe to use the asset. Please see the Phaser.Loader.LoaderPlugin class for more details.
              * 
-             * Phaser expects the atlas data to be provided in a YAML formatted text file as exported from Unity.
+             * Phaser expects the atlas data to be provided in a JSON format as exported from Spine.
              * 
              * Phaser can load all common image types: png, jpg, gif and any other format the browser can natively handle.
              * 
@@ -44704,24 +44697,15 @@ declare namespace Phaser {
              * Instead of passing arguments you can pass a configuration object, such as:
              * 
              * ```javascript
-             * this.load.unityAtlas({
-             *     key: 'mainmenu',
-             *     textureURL: 'images/MainMenu.png',
-             *     atlasURL: 'images/MainMenu.txt'
+             * this.load.spine({
+             *     key: 'spineboy',
+             *     jsonURL: 'spine/sb/spineboy.json',
+             *     atlasURL: 'spine/spineboy.atlas',
+             *     path: 'spine/sb/'
              * });
              * ```
              * 
              * See the documentation for `Phaser.Loader.FileTypes.SpineFileConfig` for more details.
-             * 
-             * Once the atlas has finished loading you can use frames from it as textures for a Game Object by referencing its key:
-             * 
-             * ```javascript
-             * this.load.unityAtlas('mainmenu', 'images/MainMenu.png', 'images/MainMenu.json');
-             * // and later in your game ...
-             * this.add.image(x, y, 'mainmenu', 'background');
-             * ```
-             * 
-             * To get a list of all available frames within an atlas please consult your Texture Atlas software.
              * 
              * If you have specified a prefix in the loader, via `Loader.setPrefix` then this value will be prepended to this files
              * key. For example, if the prefix was `MENU.` and the key was `Background` the final key will be `MENU.Background` and
@@ -44729,40 +44713,15 @@ declare namespace Phaser {
              * 
              * The URL can be relative or absolute. If the URL is relative the `Loader.baseURL` and `Loader.path` values will be prepended to it.
              * 
-             * If the URL isn't specified the Loader will take the key and create a filename from that. For example if the key is "alien"
-             * and no URL is given then the Loader will set the URL to be "alien.png". It will always add `.png` as the extension, although
-             * this can be overridden if using an object instead of method arguments. If you do not desire this action then provide a URL.
-             * 
-             * Phaser also supports the automatic loading of associated normal maps. If you have a normal map to go with this image,
-             * then you can specify it by providing an array as the `url` where the second element is the normal map:
-             * 
-             * ```javascript
-             * this.load.unityAtlas('mainmenu', [ 'images/MainMenu.png', 'images/MainMenu-n.png' ], 'images/MainMenu.txt');
-             * ```
-             * 
-             * Or, if you are using a config object use the `normalMap` property:
-             * 
-             * ```javascript
-             * this.load.unityAtlas({
-             *     key: 'mainmenu',
-             *     textureURL: 'images/MainMenu.png',
-             *     normalMap: 'images/MainMenu-n.png',
-             *     atlasURL: 'images/MainMenu.txt'
-             * });
-             * ```
-             * 
-             * The normal map file is subject to the same conditions as the image file with regard to the path, baseURL, CORs and XHR Settings.
-             * Normal maps are a WebGL only feature.
-             * 
-             * Note: The ability to load this type of file will only be available if the Unity Atlas File type has been built into Phaser.
-             * It is available in the default build but can be excluded from custom builds.
+             * Note: The ability to load this type of file will only be available if the Spine plugin has been added.
              * @param key The key to use for this file, or a file configuration object, or array of them.
-             * @param textureURL The absolute or relative URL to load the texture image file from. If undefined or `null` it will be set to `<key>.png`, i.e. if `key` was "alien" then the URL will be "alien.png".
+             * @param jsonURL The absolute or relative URL to load the texture image file from. If undefined or `null` it will be set to `<key>.png`, i.e. if `key` was "alien" then the URL will be "alien.png".
              * @param atlasURL The absolute or relative URL to load the texture atlas data file from. If undefined or `null` it will be set to `<key>.txt`, i.e. if `key` was "alien" then the URL will be "alien.txt".
-             * @param textureXhrSettings An XHR Settings configuration object for the atlas image file. Used in replacement of the Loaders default XHR Settings.
+             * @param path Optional path to use when loading the textures defined in the atlas data.
+             * @param jsonXhrSettings An XHR Settings configuration object for the json file. Used in replacement of the Loaders default XHR Settings.
              * @param atlasXhrSettings An XHR Settings configuration object for the atlas data file. Used in replacement of the Loaders default XHR Settings.
              */
-            spine(key: string | Phaser.Loader.FileTypes.SpineFileConfig | Phaser.Loader.FileTypes.SpineFileConfig[], textureURL?: string | string[], atlasURL?: string, textureXhrSettings?: XHRSettingsObject, atlasXhrSettings?: XHRSettingsObject): Phaser.Loader.LoaderPlugin;
+            spine(key: string | Phaser.Loader.FileTypes.SpineFileConfig | Phaser.Loader.FileTypes.SpineFileConfig[], jsonURL?: string | string[], atlasURL?: string, path?: string, jsonXhrSettings?: XHRSettingsObject, atlasXhrSettings?: XHRSettingsObject): Phaser.Loader.LoaderPlugin;
 
         }
 
@@ -73194,11 +73153,13 @@ declare namespace Phaser.FacebookInstantGamesPlugin {
          * 
          * The data is requested in an async call, so the result isn't available immediately.
          * 
-         * When the call completes this Leaderboard will emit the `setscore` event along with the score, any extra data and the name of the Leaderboard.
+         * When the call completes this Leaderboard will emit the `setscore` event along with the LeaderboardScore object and the name of the Leaderboard.
+         * 
+         * If the save fails the event will send `null` as the score value.
          * @param score The new score for the player. Must be a 64-bit integer number.
-         * @param data Metadata to associate with the stored score. Must be less than 2KB in size.
+         * @param data Metadata to associate with the stored score. Must be less than 2KB in size. If an object is given it will be passed to `JSON.stringify`.
          */
-        setScore(score: integer, data?: string): this;
+        setScore(score: integer, data?: string | any): this;
 
         /**
          * Gets the players leaderboard entry and stores it in the `playerScore` property.
@@ -73206,6 +73167,8 @@ declare namespace Phaser.FacebookInstantGamesPlugin {
          * The data is requested in an async call, so the result isn't available immediately.
          * 
          * When the call completes this Leaderboard will emit the `getplayerscore` event along with the score and the name of the Leaderboard.
+         * 
+         * If the player has not yet saved a score, the event will send `null` as the score value, and `playerScore` will be set to `null` as well.
          */
         getPlayerScore(): this;
 
@@ -73214,11 +73177,22 @@ declare namespace Phaser.FacebookInstantGamesPlugin {
          * 
          * The data is requested in an async call, so the result isn't available immediately.
          * 
-         * When the call completes this Leaderboard will emit the `getplayerscore` event along with the score and the name of the Leaderboard.
+         * When the call completes this Leaderboard will emit the `getscores` event along with an array of LeaderboardScore entries and the name of the Leaderboard.
          * @param count The number of entries to attempt to fetch from the leaderboard. Currently, up to a maximum of 100 entries may be fetched per query. Default 10.
          * @param offset The offset from the top of the leaderboard that entries will be fetched from. Default 0.
          */
         getScores(count?: integer, offset?: integer): this;
+
+        /**
+         * Retrieves a set of leaderboard entries, based on the current player's connected players (including the current player), ordered by local rank within the set of connected players.
+         * 
+         * The data is requested in an async call, so the result isn't available immediately.
+         * 
+         * When the call completes this Leaderboard will emit the `getconnectedscores` event along with an array of LeaderboardScore entries and the name of the Leaderboard.
+         * @param count The number of entries to attempt to fetch from the leaderboard. Currently, up to a maximum of 100 entries may be fetched per query. Default 10.
+         * @param offset The offset from the top of the leaderboard that entries will be fetched from. Default 0.
+         */
+        getConnectedScores(count?: integer, offset?: integer): this;
 
     }
 
