@@ -304,7 +304,7 @@ declare type MouseInputConfig = {
      */
     target?: any;
     /**
-     * Whether mouse input events have preventDefault() called on them.
+     * Whether mouse input events have `preventDefault` called on them.
      */
     capture?: boolean;
 };
@@ -314,6 +314,10 @@ declare type KeyboardInputConfig = {
      * Where the Keyboard Manager listens for keyboard input events.
      */
     target?: any;
+    /**
+     * `preventDefault` will be called on every non-modified key which has a key code in this array. By default, it's set to all the space key, cursors and all alphanumeric keys. Or, set to 'false' to disable.
+     */
+    capture?: boolean | integer[];
 };
 
 declare type TouchInputConfig = {
@@ -709,6 +713,14 @@ declare type GameConfig = {
      */
     plugins?: PluginObject | PluginObjectItem[];
 };
+
+declare namespace module {
+    /**
+     * "Computers are good at following instructions, but not at reading your mind." - Donald Knuth
+     */
+    var exports: any;
+
+}
 
 declare type TimeStepCallback = (time: number, average: number, interpolation: number)=>void;
 
@@ -4593,6 +4605,11 @@ declare namespace Phaser {
             readonly inputKeyboardEventTarget: any;
 
             /**
+             * `preventDefault` will be called on every non-modified key which has a key code in this array. By default, it's set to all alphanumeric keys. Or, set to 'false' to disable.
+             */
+            readonly inputKeyboardCapture: boolean | integer[];
+
+            /**
              * Enable the Mouse Plugin. This can be disabled in games that don't need mouse input.
              */
             readonly inputMouse: boolean | object;
@@ -4728,7 +4745,7 @@ declare namespace Phaser {
             readonly maxLights: integer;
 
             /**
-             * The background color of the game canvas. The default is black.
+             * The background color of the game canvas. The default is black. This value is ignored if `transparent` is set to `true`.
              */
             readonly backgroundColor: Phaser.Display.Color;
 
@@ -10288,6 +10305,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -10310,6 +10328,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -10317,7 +10336,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -11190,6 +11209,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -11212,6 +11232,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -11219,7 +11240,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -11898,6 +11919,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -11920,6 +11942,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -11927,7 +11950,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -12698,6 +12721,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -12719,6 +12743,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -12726,7 +12751,7 @@ declare namespace Phaser {
                  * 
                  * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
                  * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-                 * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+                 * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
                  * are used.
                  * @param value The BlendMode value. Either a string or a CONST.
                  */
@@ -14319,6 +14344,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -14341,6 +14367,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -14348,7 +14375,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -14836,6 +14863,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -14858,6 +14886,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -14865,7 +14894,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -15290,6 +15319,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -15312,6 +15342,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -15319,7 +15350,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -17658,6 +17689,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -17680,6 +17712,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -17687,7 +17720,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -18438,6 +18471,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -18460,6 +18494,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -18467,7 +18502,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -19580,6 +19615,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -19602,6 +19638,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -19609,7 +19646,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -21273,6 +21310,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -21280,7 +21318,7 @@ declare namespace Phaser {
                  * 
                  * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
                  * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-                 * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+                 * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
                  * are used.
                  * @param value The BlendMode value. Either a string or a CONST.
                  */
@@ -22070,6 +22108,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -22092,6 +22131,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -22099,7 +22139,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -23048,6 +23088,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -23070,6 +23111,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -23077,7 +23119,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -23989,6 +24031,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -24011,6 +24054,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -24018,7 +24062,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -24811,6 +24855,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -24833,6 +24878,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -24840,7 +24886,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -25446,6 +25492,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -25468,6 +25515,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -25475,7 +25523,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -26091,6 +26139,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -26113,6 +26162,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -26120,7 +26170,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -26791,6 +26841,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -26813,6 +26864,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -26820,7 +26872,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -27473,6 +27525,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -27495,6 +27548,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -27502,7 +27556,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -28169,6 +28223,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -28191,6 +28246,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -28198,7 +28254,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -28818,6 +28874,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -28840,6 +28897,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -28847,7 +28905,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -29451,6 +29509,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -29473,6 +29532,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -29480,7 +29540,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -30067,6 +30127,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -30089,6 +30150,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -30096,7 +30158,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -30773,6 +30835,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -30795,6 +30858,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -30802,7 +30866,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -31432,6 +31496,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -31454,6 +31519,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -31461,7 +31527,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -32065,6 +32131,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -32087,6 +32154,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -32094,7 +32162,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -32705,6 +32773,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -32727,6 +32796,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -32734,7 +32804,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -33893,6 +33963,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -33915,6 +33986,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -33922,7 +33994,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -34808,6 +34880,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -34830,6 +34903,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -34837,7 +34911,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -39765,6 +39839,10 @@ declare namespace Phaser {
              * var spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
              * ```
              * 
+             * If you have multiple parallel Scenes, each trying to get keyboard input, be sure to disable capture on them to stop them from
+             * stealing input from another Scene in the list. You can do this with `this.input.keyboard.enabled = false` within the
+             * Scene to stop all input, or `this.input.keyboard.preventDefault = false` to stop a Scene halting input on another Scene.
+             * 
              * _Note_: Many keyboards are unable to process certain combinations of keys due to hardware limitations known as ghosting.
              * See http://www.html5gamedevs.com/topic/4876-impossible-to-use-more-than-2-keyboard-input-buttons-at-the-same-time/ for more details.
              * 
@@ -39815,6 +39893,46 @@ declare namespace Phaser {
                  * An array of KeyCombo objects to process.
                  */
                 combos: Phaser.Input.Keyboard.KeyCombo[];
+
+                /**
+                 * A flag that controls if the non-modified keys, matching those stored in the `captures` array,
+                 * have `preventDefault` called on them or not. By default this is `true`.
+                 * 
+                 * A non-modified key is one that doesn't have a modifier key held down with it. The modifier keys are
+                 * shift, control, alt and the meta key (Command on a Mac, the Windows Key on Windows).
+                 * Therefore, if the user presses shift + r, it won't prevent this combination, because of the modifier.
+                 * However, if the user presses just the r key on its own, it will have its event prevented.
+                 * 
+                 * You can set this flag to stop any capture key from triggering the default browser action, or if you need
+                 * more specific control, you can create Key objects and set the flag on each of those instead.
+                 * 
+                 * This flag can be set in the Game Config by setting the `input.keyboard.capture` to a `false` boolean, or you
+                 * can set it in the Scene Config, in which case the Scene Config setting overrides the Game Config one.
+                 */
+                preventDefault: boolean;
+
+                /**
+                 * An array of Key Code values that will automatically have `preventDefault` called on them,
+                 * as long as the `KeyboardPlugin.preventDefault` boolean is set to `true`.
+                 * 
+                 * By default the array contains: The Space Key, the Cursor Keys, 0 to 9 and A to Z.
+                 * 
+                 * The key must be non-modified when pressed in order to be captured.
+                 * 
+                 * A non-modified key is one that doesn't have a modifier key held down with it. The modifier keys are
+                 * shift, control, alt and the meta key (Command on a Mac, the Windows Key on Windows).
+                 * Therefore, if the user presses shift + r, it won't prevent this combination, because of the modifier.
+                 * However, if the user presses just the r key on its own, it will have its event prevented.
+                 * 
+                 * If you wish to stop capturing the keys, for example switching out to a DOM based element, then
+                 * you can toggle the `KeyboardPlugin.preventDefault` boolean at run-time.
+                 * 
+                 * If you need more specific control, you can create Key objects and set the flag on each of those instead.
+                 * 
+                 * This array can be populated via the Game Config by setting the `input.keyboard.capture` array, or you
+                 * can set it in the Scene Config, in which case the Scene Config array overrides the Game Config one.
+                 */
+                captures: integer[];
 
                 /**
                  * Checks to see if both this plugin and the Scene to which it belongs is active.
@@ -40039,6 +40157,12 @@ declare namespace Phaser {
                  * The down state of the SHIFT key, if pressed at the same time as this key.
                  */
                 shiftKey: boolean;
+
+                /**
+                 * The down state of the Meta key, if pressed at the same time as this key.
+                 * On a Mac the Meta Key is the Command key. On Windows keyboards, it's the Windows key.
+                 */
+                metaKey: boolean;
 
                 /**
                  * The location of the modifier key. 0 for standard (or unknown), 1 for left, 2 for right, 3 for numpad.
@@ -47049,6 +47173,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -47071,6 +47196,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -47078,7 +47204,7 @@ declare namespace Phaser {
                  * 
                  * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
                  * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-                 * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+                 * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
                  * are used.
                  * @param value The BlendMode value. Either a string or a CONST.
                  */
@@ -48367,6 +48493,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -48389,6 +48516,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -48396,7 +48524,7 @@ declare namespace Phaser {
                  * 
                  * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
                  * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-                 * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+                 * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
                  * are used.
                  * @param value The BlendMode value. Either a string or a CONST.
                  */
@@ -52987,6 +53115,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -53009,6 +53138,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -53016,7 +53146,7 @@ declare namespace Phaser {
                  * 
                  * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
                  * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-                 * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+                 * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
                  * are used.
                  * @param value The BlendMode value. Either a string or a CONST.
                  */
@@ -54157,6 +54287,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -54179,6 +54310,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -54186,7 +54318,7 @@ declare namespace Phaser {
                  * 
                  * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
                  * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-                 * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+                 * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
                  * are used.
                  * @param value The BlendMode value. Either a string or a CONST.
                  */
@@ -56347,6 +56479,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -56369,6 +56502,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -56376,7 +56510,7 @@ declare namespace Phaser {
                  * 
                  * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
                  * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-                 * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+                 * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
                  * are used.
                  * @param value The BlendMode value. Either a string or a CONST.
                  */
@@ -57525,6 +57659,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -57547,6 +57682,7 @@ declare namespace Phaser {
                  * * ADD
                  * * MULTIPLY
                  * * SCREEN
+                 * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
                  * 
                  * Canvas has more available depending on browser support.
                  * 
@@ -57554,7 +57690,7 @@ declare namespace Phaser {
                  * 
                  * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
                  * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-                 * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+                 * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
                  * are used.
                  * @param value The BlendMode value. Either a string or a CONST.
                  */
@@ -59562,77 +59698,144 @@ declare namespace Phaser {
          */
         SKIP_CHECK,
         /**
-         * Normal blend mode.
+         * Normal blend mode. For Canvas and WebGL.
+         * This is the default setting and draws new shapes on top of the existing canvas content.
          */
         NORMAL,
         /**
-         * Add blend mode.
+         * Add blend mode. For Canvas and WebGL.
+         * Where both shapes overlap the color is determined by adding color values.
          */
         ADD,
         /**
-         * Multiply blend mode.
+         * Multiply blend mode. For Canvas and WebGL.
+         * The pixels are of the top layer are multiplied with the corresponding pixel of the bottom layer. A darker picture is the result.
          */
         MULTIPLY,
         /**
-         * Screen blend mode.
+         * Screen blend mode. For Canvas and WebGL.
+         * The pixels are inverted, multiplied, and inverted again. A lighter picture is the result (opposite of multiply)
          */
         SCREEN,
         /**
-         * Overlay blend mode.
+         * Overlay blend mode. For Canvas only.
+         * A combination of multiply and screen. Dark parts on the base layer become darker, and light parts become lighter.
          */
         OVERLAY,
         /**
-         * Darken blend mode.
+         * Darken blend mode. For Canvas only.
+         * Retains the darkest pixels of both layers.
          */
         DARKEN,
         /**
-         * Lighten blend mode.
+         * Lighten blend mode. For Canvas only.
+         * Retains the lightest pixels of both layers.
          */
         LIGHTEN,
         /**
-         * Color Dodge blend mode.
+         * Color Dodge blend mode. For Canvas only.
+         * Divides the bottom layer by the inverted top layer.
          */
         COLOR_DODGE,
         /**
-         * Color Burn blend mode.
+         * Color Burn blend mode. For Canvas only.
+         * Divides the inverted bottom layer by the top layer, and then inverts the result.
          */
         COLOR_BURN,
         /**
-         * Hard Light blend mode.
+         * Hard Light blend mode. For Canvas only.
+         * A combination of multiply and screen like overlay, but with top and bottom layer swapped.
          */
         HARD_LIGHT,
         /**
-         * Soft Light blend mode.
+         * Soft Light blend mode. For Canvas only.
+         * A softer version of hard-light. Pure black or white does not result in pure black or white.
          */
         SOFT_LIGHT,
         /**
-         * Difference blend mode.
+         * Difference blend mode. For Canvas only.
+         * Subtracts the bottom layer from the top layer or the other way round to always get a positive value.
          */
         DIFFERENCE,
         /**
-         * Exclusion blend mode.
+         * Exclusion blend mode. For Canvas only.
+         * Like difference, but with lower contrast.
          */
         EXCLUSION,
         /**
-         * Hue blend mode.
+         * Hue blend mode. For Canvas only.
+         * Preserves the luma and chroma of the bottom layer, while adopting the hue of the top layer.
          */
         HUE,
         /**
-         * Saturation blend mode.
+         * Saturation blend mode. For Canvas only.
+         * Preserves the luma and hue of the bottom layer, while adopting the chroma of the top layer.
          */
         SATURATION,
         /**
-         * Color blend mode.
+         * Color blend mode. For Canvas only.
+         * Preserves the luma of the bottom layer, while adopting the hue and chroma of the top layer.
          */
         COLOR,
         /**
-         * Luminosity blend mode.
+         * Luminosity blend mode. For Canvas only.
+         * Preserves the hue and chroma of the bottom layer, while adopting the luma of the top layer.
          */
         LUMINOSITY,
         /**
-         * Alpha erase blend mode.
+         * Alpha erase blend mode. For Canvas and WebGL.
          */
         ERASE,
+        /**
+         * Source-in blend mode. For Canvas only.
+         * The new shape is drawn only where both the new shape and the destination canvas overlap. Everything else is made transparent.
+         */
+        SOURCE_IN,
+        /**
+         * Source-out blend mode. For Canvas only.
+         * The new shape is drawn where it doesn't overlap the existing canvas content.
+         */
+        SOURCE_OUT,
+        /**
+         * Source-out blend mode. For Canvas only.
+         * The new shape is only drawn where it overlaps the existing canvas content.
+         */
+        SOURCE_ATOP,
+        /**
+         * Destination-over blend mode. For Canvas only.
+         * New shapes are drawn behind the existing canvas content.
+         */
+        DESTINATION_OVER,
+        /**
+         * Destination-in blend mode. For Canvas only.
+         * The existing canvas content is kept where both the new shape and existing canvas content overlap. Everything else is made transparent.
+         */
+        DESTINATION_IN,
+        /**
+         * Destination-out blend mode. For Canvas only.
+         * The existing content is kept where it doesn't overlap the new shape.
+         */
+        DESTINATION_OUT,
+        /**
+         * Destination-out blend mode. For Canvas only.
+         * The existing canvas is only kept where it overlaps the new shape. The new shape is drawn behind the canvas content.
+         */
+        DESTINATION_ATOP,
+        /**
+         * Lighten blend mode. For Canvas only.
+         * Where both shapes overlap the color is determined by adding color values.
+         */
+        LIGHTER,
+        /**
+         * Copy blend mode. For Canvas only.
+         * Only the new shape is shown.
+         */
+        COPY,
+        /**
+         * xor blend mode. For Canvas only.
+         * Shapes are made transparent where both overlap and drawn normal everywhere else.
+         */
+        XOR,
     }
 
     namespace Renderer {
@@ -59757,7 +59960,7 @@ declare namespace Phaser {
                  * Sets the blend mode (compositing operation) of the current context.
                  * @param blendMode The new blend mode which should be used.
                  */
-                setBlendMode(blendMode: number): this;
+                setBlendMode(blendMode: string): this;
 
                 /**
                  * Changes the Canvas Rendering Context that all draw operations are performed against.
@@ -65535,6 +65738,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -65557,6 +65761,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -65564,7 +65769,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
@@ -67242,6 +67447,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -67264,6 +67470,7 @@ declare namespace Phaser {
              * * ADD
              * * MULTIPLY
              * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
              * 
              * Canvas has more available depending on browser support.
              * 
@@ -67271,7 +67478,7 @@ declare namespace Phaser {
              * 
              * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
              * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
-             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
              * are used.
              * @param value The BlendMode value. Either a string or a CONST.
              */
