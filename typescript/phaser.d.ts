@@ -4555,6 +4555,11 @@ declare namespace Phaser {
             readonly canvasStyle: string;
 
             /**
+             * Is Phaser running under a custom (non-native web) environment? If so, set this to `true` to skip internal Feature detection. If `true` the `renderType` cannot be left as `AUTO`.
+             */
+            readonly customEnvironment: boolean;
+
+            /**
              * The default Scene configuration object.
              */
             readonly sceneConfig: object;
@@ -12687,6 +12692,22 @@ declare namespace Phaser {
                  * @param animationFrame The Animation Frame to set as being current.
                  */
                 setCurrentFrame(animationFrame: Phaser.Animations.AnimationFrame): Phaser.GameObjects.GameObject;
+                /**
+                 * Advances the animation to the next frame, regardless of the time or animation state.
+                 * If the animation is set to repeat, or yoyo, this will still take effect.
+                 * 
+                 * Calling this does not change the direction of the animation. I.e. if it was currently
+                 * playing in reverse, calling this method doesn't then change the direction to forwards.
+                 */
+                nextFrame(): Phaser.GameObjects.GameObject;
+                /**
+                 * Advances the animation to the previous frame, regardless of the time or animation state.
+                 * If the animation is set to repeat, or yoyo, this will still take effect.
+                 * 
+                 * Calling this does not change the direction of the animation. I.e. if it was currently
+                 * playing in forwards, calling this method doesn't then change the direction to backwards.
+                 */
+                previousFrame(): Phaser.GameObjects.GameObject;
                 /**
                  * Sets if the current Animation will yoyo when it reaches the end.
                  * A yoyo'ing animation will play through consecutively, and then reverse-play back to the start again.
@@ -36181,9 +36202,9 @@ declare namespace Phaser {
 
             /**
              * Sets a skin by name.
-             * @param newSkin The name of the new skin.
+             * @param skinName The name of the new skin.
              */
-            setSkinByName(newSkin: string): void;
+            setSkinByName(skinName: string): void;
 
             /**
              * Sets a skin.
@@ -61308,8 +61329,14 @@ declare namespace Phaser {
                 preRender(): void;
 
                 /**
-                 * The core render step for a Scene.
+                 * The core render step for a Scene Camera.
+                 * 
                  * Iterates through the given Game Object's array and renders them with the given Camera.
+                 * 
+                 * This is called by the `CameraManager.render` method. The Camera Manager instance belongs to a Scene, and is invoked
+                 * by the Scene Systems.render method.
+                 * 
+                 * This method is not called if `Camera.visible` is `false`, or `Camera.alpha` is zero.
                  * @param scene The Scene to render.
                  * @param children The Game Object's within the Scene to be rendered.
                  * @param interpolationPercentage The interpolation percentage to apply. Currently un-used.
@@ -61940,8 +61967,9 @@ declare namespace Phaser {
              * @param key The Scene key.
              * @param sceneConfig The config for the Scene.
              * @param autoStart Whether to start the Scene after it's added.
+             * @param data Optional data object. This will be set as Scene.settings.data and passed to `Scene.init`.
              */
-            add(key: string, sceneConfig: Phaser.Scene | Phaser.Scenes.Settings.Config | Function, autoStart: boolean): Phaser.Scenes.ScenePlugin;
+            add(key: string, sceneConfig: Phaser.Scene | Phaser.Scenes.Settings.Config | Function, autoStart: boolean, data?: object): Phaser.Scenes.ScenePlugin;
 
             /**
              * Launch the given Scene and run it in parallel with this one.
@@ -63965,7 +63993,7 @@ declare namespace Phaser {
              * @param callback The callback to be invoked and passed each value this Set contains.
              * @param callbackScope The scope of the callback.
              */
-            each(callback: EachSetCallback<T>, callbackScope: any): Phaser.Structs.Set<T>;
+            each(callback: EachSetCallback<T>, callbackScope?: any): Phaser.Structs.Set<T>;
 
             /**
              * Passes each value in this Set to the given callback.
@@ -63973,7 +64001,7 @@ declare namespace Phaser {
              * @param callback The callback to be invoked and passed each value this Set contains.
              * @param callbackScope The scope of the callback.
              */
-            iterate(callback: EachSetCallback<T>, callbackScope: any): Phaser.Structs.Set<T>;
+            iterate(callback: EachSetCallback<T>, callbackScope?: any): Phaser.Structs.Set<T>;
 
             /**
              * Goes through each entry in this Set and invokes the given function on them, passing in the arguments.
