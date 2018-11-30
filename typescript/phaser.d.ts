@@ -296,6 +296,10 @@ declare type InputConfig = {
      * The maximum number of touch pointers. See {@link Phaser.Input.InputManager#pointers}.
      */
     activePointers?: integer;
+    /**
+     * The smoothing factor to apply during Pointer movement. See {@link Phaser.Input.Pointer#smoothFactor}.
+     */
+    smoothFactor?: number;
 };
 
 declare type MouseInputConfig = {
@@ -1840,7 +1844,7 @@ declare type GroupConfig = {
     /**
      * Sets {@link Phaser.GameObjects.Group#classType}.
      */
-    classType?: object;
+    classType?: GroupClassTypeConstructor;
     /**
      * Sets {@link Phaser.GameObjects.Group#active}.
      */
@@ -1890,7 +1894,7 @@ declare type GroupCreateConfig = {
     /**
      * The class of each new Game Object.
      */
-    classType?: object;
+    classType?: GroupClassTypeConstructor;
     /**
      * The texture key of each new Game Object.
      */
@@ -1996,6 +2000,11 @@ declare type GroupCreateConfig = {
      */
     gridAlign?: false | GridAlignConfig;
 };
+
+/**
+ * A constructor function (class) that can be assigned to `classType`.
+ */
+declare type GroupClassTypeConstructor = (scene: Phaser.Scene, x: number, y: number, texture: string, frame?: string | integer)=>void;
 
 declare type LightForEach = (light: Phaser.GameObjects.Light)=>void;
 
@@ -2497,6 +2506,10 @@ declare type PathConfig = {
      * If the PathFollower is rotating to match the Path, this value is added to the rotation value. This allows you to rotate objects to a path but control the angle of the rotation as well.
      */
     rotationOffset?: number;
+    /**
+     * Current start position of the path follow, between 0 and 1.
+     */
+    startAt?: number;
 };
 
 declare type RenderTextureConfig = {
@@ -4378,12 +4391,6 @@ declare namespace Phaser {
         readonly hasFocus: boolean;
 
         /**
-         * Is the mouse pointer currently over the game canvas or not?
-         * This is modified by the VisibilityHandler.
-         */
-        readonly isOver: boolean;
-
-        /**
          * This method is called automatically when the DOM is ready. It is responsible for creating the renderer,
          * displaying the Debug Header, adding the game canvas to the DOM and emitting the 'boot' event.
          * It listens for a 'ready' event from the base systems and once received it will call `Game.start`.
@@ -4454,6 +4461,18 @@ declare namespace Phaser {
          * @param height The new height of the game.
          */
         resize(width: number, height: number): void;
+
+        /**
+         * Returns the current game frame.
+         * When the game starts running, the frame is incremented every time Request Animation Frame, or Set Timeout, fires.
+         */
+        getFrame(): number;
+
+        /**
+         * Returns the current game timestamp.
+         * When the game starts running, the frame is incremented every time Request Animation Frame, or Set Timeout, fires.
+         */
+        getTime(): number;
 
         /**
          * Flags this Game instance as needing to be destroyed on the next frame.
@@ -4648,6 +4667,11 @@ declare namespace Phaser {
              * The number of Pointer objects created by default. In a mouse-only, or non-multi touch game, you can leave this as 1.
              */
             readonly inputActivePointers: integer;
+
+            /**
+             * The smoothing factor to apply during Pointer movement. See {@link Phaser.Input.Pointer#smoothFactor}.
+             */
+            readonly inputSmoothFactor: integer;
 
             /**
              * Enable the Gamepad Plugin. This can be disabled in games that don't need gamepad input.
@@ -5433,6 +5457,20 @@ declare namespace Phaser {
                 getScroll(x: number, y: number, out?: Phaser.Math.Vector2): Phaser.Math.Vector2;
 
                 /**
+                 * Moves the Camera horizontally so that it is centered on the given x coordinate, bounds allowing.
+                 * Calling this does not change the scrollY value.
+                 * @param x The horizontal coordinate to center on.
+                 */
+                centerOnX(x: number): Phaser.Cameras.Scene2D.BaseCamera;
+
+                /**
+                 * Moves the Camera vertically so that it is centered on the given y coordinate, bounds allowing.
+                 * Calling this does not change the scrollX value.
+                 * @param y The vertical coordinate to center on.
+                 */
+                centerOnY(y: number): Phaser.Cameras.Scene2D.BaseCamera;
+
+                /**
                  * Moves the Camera so that it is centered on the given coordinates, bounds allowing.
                  * @param x The horizontal coordinate to center on.
                  * @param y The vertical coordinate to center on.
@@ -5539,9 +5577,19 @@ declare namespace Phaser {
                  * @param y The top-left y coordinate of the bounds.
                  * @param width The width of the bounds, in pixels.
                  * @param height The height of the bounds, in pixels.
-                 * @param centerOn If `true` the Camera will automatically be centered on the new bounds.
+                 * @param centerOn If `true` the Camera will automatically be centered on the new bounds. Default false.
                  */
                 setBounds(x: integer, y: integer, width: integer, height: integer, centerOn?: boolean): Phaser.Cameras.Scene2D.BaseCamera;
+
+                /**
+                 * Returns a rectangle containing the bounds of the Camera.
+                 * 
+                 * If the Camera does not have any bounds the rectangle will be empty.
+                 * 
+                 * The rectangle is a copy of the bounds, so is safe to modify.
+                 * @param out An optional Rectangle to store the bounds in. If not given, a new Rectangle will be created.
+                 */
+                getBounds(out?: Phaser.Geom.Rectangle): Phaser.Geom.Rectangle;
 
                 /**
                  * Sets the name of this Camera.
@@ -5734,12 +5782,12 @@ declare namespace Phaser {
                 zoom: number;
 
                 /**
-                 * The x position of the center of the Camera's viewport, relative to the top-left of the game canvas.
+                 * The horizontal position of the center of the Camera's viewport, relative to the left of the game canvas.
                  */
                 readonly centerX: number;
 
                 /**
-                 * The y position of the center of the Camera's viewport, relative to the top-left of the game canvas.
+                 * The vertical position of the center of the Camera's viewport, relative to the top of the game canvas.
                  */
                 readonly centerY: number;
 
@@ -15957,8 +16005,8 @@ declare namespace Phaser {
              * Phaser itself will never modify this value, although plugins may do so.
              * 
              * Use this property to track the state of a Game Object during its lifetime. For example, it could move from
-             * a state of 'moving', to 'attacking', to 'dead'. The state value should typically be an integer (ideally mapped to a constant
-             * in your game code), but could also be a string, or any other data-type. It is recommended to keep it light and simple.
+             * a state of 'moving', to 'attacking', to 'dead'. The state value should be an integer (ideally mapped to a constant
+             * in your game code), or a string. These are recommended to keep it light and simple, with fast comparisons.
              * If you need to store complex data about your Game Object, look at using the Data Component instead.
              */
             state: integer | string;
@@ -16040,6 +16088,19 @@ declare namespace Phaser {
              * @param value The name to be given to this Game Object.
              */
             setName(value: string): this;
+
+            /**
+             * Sets the current state of this Game Object.
+             * 
+             * Phaser itself will never modify the State of a Game Object, although plugins may do so.
+             * 
+             * For example, a Game Object could change from a state of 'moving', to 'attacking', to 'dead'.
+             * The state value should typically be an integer (ideally mapped to a constant
+             * in your game code), but could also be a string. It is recommended to keep it light and simple.
+             * If you need to store complex data about your Game Object, look at using the Data Component instead.
+             * @param value The state of the Game Object.
+             */
+            setState(value: integer | string): this;
 
             /**
              * Adds a Data Manager component to this Game Object.
@@ -17088,11 +17149,11 @@ declare namespace Phaser {
              * Creates a new Spine Game Object and adds it to the Scene.
              * @param x The horizontal position of this Game Object.
              * @param y The vertical position of this Game Object.
-             * @param texture The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
+             * @param key The key of the Texture this Game Object will use to render with, as stored in the Texture Manager.
              * @param animationName The animation to load with.
              * @param loop Loop the loaded animation?
              */
-            spineFactory(x: number, y: number, texture: string, animationName?: string | integer, loop?: boolean): Phaser.GameObjects.SpineGameObject;
+            spineFactory(x: number, y: number, key?: string, animationName?: string | integer, loop?: boolean): Phaser.GameObjects.SpineGameObject;
 
             /**
              * Creates a new Spine Game Object Game Object and adds it to the Scene.
@@ -17295,9 +17356,25 @@ declare namespace Phaser {
             fillPath(): Phaser.GameObjects.Graphics;
 
             /**
+             * Fill the current path.
+             * 
+             * This is an alias for `Graphics.fillPath` and does the same thing.
+             * It was added to match the CanvasRenderingContext 2D API.
+             */
+            fill(): Phaser.GameObjects.Graphics;
+
+            /**
              * Stroke the current path.
              */
             strokePath(): Phaser.GameObjects.Graphics;
+
+            /**
+             * Stroke the current path.
+             * 
+             * This is an alias for `Graphics.strokePath` and does the same thing.
+             * It was added to match the CanvasRenderingContext 2D API.
+             */
+            stroke(): Phaser.GameObjects.Graphics;
 
             /**
              * Fill the given circle.
@@ -18101,7 +18178,7 @@ declare namespace Phaser {
             /**
              * The class to create new group members from.
              */
-            classType: object;
+            classType: GroupClassTypeConstructor;
 
             /**
              * Whether this group runs its {@link Phaser.GameObjects.Group#preUpdate} method
@@ -20539,11 +20616,6 @@ declare namespace Phaser {
                 frame: Phaser.Textures.Frame;
 
                 /**
-                 * The position of this Particle within its Emitter's particle pool.
-                 */
-                index: number;
-
-                /**
                  * The x coordinate of this Particle.
                  */
                 x: number;
@@ -20647,6 +20719,11 @@ declare namespace Phaser {
                  * Checks to see if this Particle is alive and updating.
                  */
                 isAlive(): boolean;
+
+                /**
+                 * Resets the position of this particle back to zero.
+                 */
+                resetPosition(): void;
 
                 /**
                  * Starts this Particle from the given coordinates.
@@ -21313,13 +21390,6 @@ declare namespace Phaser {
                  * @param b The second particle.
                  */
                 depthSortCallback(a: object, b: object): integer;
-
-                /**
-                 * Calculates the difference of two particles, for sorting them by index.
-                 * @param a The first particle.
-                 * @param b The second particle.
-                 */
-                indexSortCallback(a: object, b: object): integer;
 
                 /**
                  * Sets the Blend Mode being used by this Game Object.
@@ -36127,13 +36197,22 @@ declare namespace Phaser {
         /**
          * TODO
          */
-        class SpineGameObject extends Phaser.GameObjects.GameObject {
+        class SpineGameObject extends Phaser.GameObjects.GameObject implements Phaser.GameObjects.Components.Alpha, Phaser.GameObjects.Components.BlendMode, Phaser.GameObjects.Components.Depth, Phaser.GameObjects.Components.Flip, Phaser.GameObjects.Components.Transform, Phaser.GameObjects.Components.Visible, Phaser.GameObjects.Components.ScrollFactor {
             /**
              * 
              * @param scene A reference to the Scene that has installed this plugin.
              * @param plugin A reference to the Phaser Plugin Manager.
              */
             constructor(scene: Phaser.Scene, plugin: Phaser.Plugins.PluginManager, x: number, y: number, animationName: string, loop: boolean);
+
+            /**
+             * Gets a list of the animations available.
+             * @param textureKey The key of the atlas Texture this Spine Game Object will use to render with, as stored in the Texture Manager.
+             * @param animationName The animation name.
+             * @param atlasDataKey The animation name.
+             * @param skeletonJSON The animation name.
+             */
+            setSkeleton(textureKey: string, animationName: string, atlasDataKey: loop, skeletonJSON: skeletonJSON): Phaser.GameObjects.SpineGameObject;
 
             /**
              * Gets a list of the animations available.
@@ -36165,7 +36244,7 @@ declare namespace Phaser {
              * @param loop The index of the track.
              * @param delay The index of the track.
              */
-            addAnimation(trackIndex: number, animationName: string, loop: string, delay: string): any;
+            addAnimation(trackIndex: number, animationName: string, loop: string, delay: string): spine.trackEntry;
 
             /**
              * Sets an empty animation for a track, discarding any queued animations, and sets the track entry's mixDuration.
@@ -36183,7 +36262,13 @@ declare namespace Phaser {
              * @param trackIndex The index of the track.
              * @param mixDuration The index of the track.
              */
-            setEmptyAnimation(trackIndex: number, mixDuration: number): void;
+            setEmptyAnimation(trackIndex: number, mixDuration: number): Phaser.GameObjects.SpineGameObject;
+
+            /**
+             * Returns the track entry for the animation currently playing on the track, or null if no animation is currently playing.
+             * @param trackIndex The index of the track.
+             */
+            getCurrent(trackIndex: number): spine.trackEntry;
 
             /**
              * Removes all animations from the track, leaving skeletons in their previous pose.
@@ -36191,26 +36276,26 @@ declare namespace Phaser {
              * rather than leaving them in their previous pose.
              * @param trackIndex The index of the track.
              */
-            clearTrack(trackIndex: number): void;
+            clearTrack(trackIndex: number): Phaser.GameObjects.SpineGameObject;
 
             /**
              * Removes all animations from all tracks, leaving skeletons in their previous pose.
              * It may be desired to use setEmptyAnimations to mix the skeletons back to the setup pose,
              * rather than leaving them in their previous pose.
              */
-            clearTracks(): void;
+            clearTracks(): Phaser.GameObjects.SpineGameObject;
 
             /**
              * Sets a skin by name.
              * @param skinName The name of the new skin.
              */
-            setSkinByName(skinName: string): void;
+            setSkinByName(skinName: string): boolean;
 
             /**
-             * Sets a skin.
+             * Sets a skin
              * @param newSkin The new skin.
              */
-            setSkin(newSkin: spine.Skin): void;
+            setSkin(newSkin: spine.Skin): Phaser.GameObjects.SpineGameObject;
 
             /**
              * Sets a mix duration by animation name.
@@ -36218,31 +36303,24 @@ declare namespace Phaser {
              * @param toName The name of the state to mix to.
              * @param duration The duration of the mix.
              */
-            setMix(fromName: string, toName: string, duration: string): void;
+            setMix(fromName: string, toName: string, duration: string): Phaser.GameObjects.SpineGameObject;
 
             /**
-             * Find a bone on this skeleton by name
+             * Finds a bone by comparing each bone's name. It is more efficient to cache the results of this method than to call it multiple times.
              * @param boneName The name of the bone.
              */
-            findBone(boneName: string): void;
+            findBone(boneName: string): spine.Bone | null;
 
             /**
-             * Find a bone index on this skeleton by name
-             * @param boneName The name of the bone.
-             */
-            findBoneIndex(boneName: string): void;
-
-            /**
-             * Find a slot index by name
+             * Finds a slot by comparing each slot's name. It is more efficient to cache the results of this method than to call it multiple times.
              * @param slotName The name of the slot.
              */
-            findSlot(slotName: string): void;
+            findSlot(slotName: string): spine.SlotData | null;
 
             /**
-             * Find the given slot's index
-             * @param slotName The name of the slot.
+             * The skeleton's slots.
              */
-            findSlotIndex(slotName: string): void;
+            getSlots(): list<spine.SlotData>;
 
             /**
              * todo
@@ -36255,6 +36333,380 @@ declare namespace Phaser {
              * @param delta The delta time, in ms, elapsed since the last frame.
              */
             protected preUpdate(time: number, delta: number): void;
+
+            /**
+             * Clears all alpha values associated with this Game Object.
+             * 
+             * Immediately sets the alpha levels back to 1 (fully opaque).
+             */
+            clearAlpha(): this;
+
+            /**
+             * Set the Alpha level of this Game Object. The alpha controls the opacity of the Game Object as it renders.
+             * Alpha values are provided as a float between 0, fully transparent, and 1, fully opaque.
+             * 
+             * If your game is running under WebGL you can optionally specify four different alpha values, each of which
+             * correspond to the four corners of the Game Object. Under Canvas only the `topLeft` value given is used.
+             * @param topLeft The alpha value used for the top-left of the Game Object. If this is the only value given it's applied across the whole Game Object. Default 1.
+             * @param topRight The alpha value used for the top-right of the Game Object. WebGL only.
+             * @param bottomLeft The alpha value used for the bottom-left of the Game Object. WebGL only.
+             * @param bottomRight The alpha value used for the bottom-right of the Game Object. WebGL only.
+             */
+            setAlpha(topLeft?: number, topRight?: number, bottomLeft?: number, bottomRight?: number): this;
+
+            /**
+             * The alpha value of the Game Object.
+             * 
+             * This is a global value, impacting the entire Game Object, not just a region of it.
+             */
+            alpha: number;
+
+            /**
+             * The alpha value starting from the top-left of the Game Object.
+             * This value is interpolated from the corner to the center of the Game Object.
+             */
+            alphaTopLeft: number;
+
+            /**
+             * The alpha value starting from the top-right of the Game Object.
+             * This value is interpolated from the corner to the center of the Game Object.
+             */
+            alphaTopRight: number;
+
+            /**
+             * The alpha value starting from the bottom-left of the Game Object.
+             * This value is interpolated from the corner to the center of the Game Object.
+             */
+            alphaBottomLeft: number;
+
+            /**
+             * The alpha value starting from the bottom-right of the Game Object.
+             * This value is interpolated from the corner to the center of the Game Object.
+             */
+            alphaBottomRight: number;
+
+            /**
+             * Sets the Blend Mode being used by this Game Object.
+             * 
+             * This can be a const, such as `Phaser.BlendModes.SCREEN`, or an integer, such as 4 (for Overlay)
+             * 
+             * Under WebGL only the following Blend Modes are available:
+             * 
+             * * ADD
+             * * MULTIPLY
+             * * SCREEN
+             * * ERASE
+             * 
+             * Canvas has more available depending on browser support.
+             * 
+             * You can also create your own custom Blend Modes in WebGL.
+             * 
+             * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
+             * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
+             * reasons try to be careful about the construction of your Scene and the frequency of which blend modes
+             * are used.
+             */
+            blendMode: Phaser.BlendModes | string;
+
+            /**
+             * Sets the Blend Mode being used by this Game Object.
+             * 
+             * This can be a const, such as `Phaser.BlendModes.SCREEN`, or an integer, such as 4 (for Overlay)
+             * 
+             * Under WebGL only the following Blend Modes are available:
+             * 
+             * * ADD
+             * * MULTIPLY
+             * * SCREEN
+             * * ERASE (only works when rendering to a framebuffer, like a Render Texture)
+             * 
+             * Canvas has more available depending on browser support.
+             * 
+             * You can also create your own custom Blend Modes in WebGL.
+             * 
+             * Blend modes have different effects under Canvas and WebGL, and from browser to browser, depending
+             * on support. Blend Modes also cause a WebGL batch flush should it encounter a new blend mode. For these
+             * reasons try to be careful about the construction of your Scene and the frequency in which blend modes
+             * are used.
+             * @param value The BlendMode value. Either a string or a CONST.
+             */
+            setBlendMode(value: string | Phaser.BlendModes): this;
+
+            /**
+             * The depth of this Game Object within the Scene.
+             * 
+             * The depth is also known as the 'z-index' in some environments, and allows you to change the rendering order
+             * of Game Objects, without actually moving their position in the display list.
+             * 
+             * The depth starts from zero (the default value) and increases from that point. A Game Object with a higher depth
+             * value will always render in front of one with a lower value.
+             * 
+             * Setting the depth will queue a depth sort event within the Scene.
+             */
+            depth: number;
+
+            /**
+             * The depth of this Game Object within the Scene.
+             * 
+             * The depth is also known as the 'z-index' in some environments, and allows you to change the rendering order
+             * of Game Objects, without actually moving their position in the display list.
+             * 
+             * The depth starts from zero (the default value) and increases from that point. A Game Object with a higher depth
+             * value will always render in front of one with a lower value.
+             * 
+             * Setting the depth will queue a depth sort event within the Scene.
+             * @param value The depth of this Game Object.
+             */
+            setDepth(value: integer): this;
+
+            /**
+             * The horizontally flipped state of the Game Object.
+             * A Game Object that is flipped horizontally will render inversed on the horizontal axis.
+             * Flipping always takes place from the middle of the texture and does not impact the scale value.
+             */
+            flipX: boolean;
+
+            /**
+             * The vertically flipped state of the Game Object.
+             * A Game Object that is flipped vertically will render inversed on the vertical axis (i.e. upside down)
+             * Flipping always takes place from the middle of the texture and does not impact the scale value.
+             */
+            flipY: boolean;
+
+            /**
+             * Toggles the horizontal flipped state of this Game Object.
+             */
+            toggleFlipX(): this;
+
+            /**
+             * Toggles the vertical flipped state of this Game Object.
+             */
+            toggleFlipY(): this;
+
+            /**
+             * Sets the horizontal flipped state of this Game Object.
+             * @param value The flipped state. `false` for no flip, or `true` to be flipped.
+             */
+            setFlipX(value: boolean): this;
+
+            /**
+             * Sets the vertical flipped state of this Game Object.
+             * @param value The flipped state. `false` for no flip, or `true` to be flipped.
+             */
+            setFlipY(value: boolean): this;
+
+            /**
+             * Sets the horizontal and vertical flipped state of this Game Object.
+             * @param x The horizontal flipped state. `false` for no flip, or `true` to be flipped.
+             * @param y The horizontal flipped state. `false` for no flip, or `true` to be flipped.
+             */
+            setFlip(x: boolean, y: boolean): this;
+
+            /**
+             * Resets the horizontal and vertical flipped state of this Game Object back to their default un-flipped state.
+             */
+            resetFlip(): this;
+
+            /**
+             * The x position of this Game Object.
+             */
+            x: number;
+
+            /**
+             * The y position of this Game Object.
+             */
+            y: number;
+
+            /**
+             * The z position of this Game Object.
+             * Note: Do not use this value to set the z-index, instead see the `depth` property.
+             */
+            z: number;
+
+            /**
+             * The w position of this Game Object.
+             */
+            w: number;
+
+            /**
+             * The horizontal scale of this Game Object.
+             */
+            scaleX: number;
+
+            /**
+             * The vertical scale of this Game Object.
+             */
+            scaleY: number;
+
+            /**
+             * The angle of this Game Object as expressed in degrees.
+             * 
+             * Where 0 is to the right, 90 is down, 180 is left.
+             * 
+             * If you prefer to work in radians, see the `rotation` property instead.
+             */
+            angle: integer;
+
+            /**
+             * The angle of this Game Object in radians.
+             * 
+             * If you prefer to work in degrees, see the `angle` property instead.
+             */
+            rotation: number;
+
+            /**
+             * Sets the position of this Game Object.
+             * @param x The x position of this Game Object. Default 0.
+             * @param y The y position of this Game Object. If not set it will use the `x` value. Default x.
+             * @param z The z position of this Game Object. Default 0.
+             * @param w The w position of this Game Object. Default 0.
+             */
+            setPosition(x?: number, y?: number, z?: number, w?: number): this;
+
+            /**
+             * Sets the position of this Game Object to be a random position within the confines of
+             * the given area.
+             * 
+             * If no area is specified a random position between 0 x 0 and the game width x height is used instead.
+             * 
+             * The position does not factor in the size of this Game Object, meaning that only the origin is
+             * guaranteed to be within the area.
+             * @param x The x position of the top-left of the random area. Default 0.
+             * @param y The y position of the top-left of the random area. Default 0.
+             * @param width The width of the random area.
+             * @param height The height of the random area.
+             */
+            setRandomPosition(x?: number, y?: number, width?: number, height?: number): this;
+
+            /**
+             * Sets the rotation of this Game Object.
+             * @param radians The rotation of this Game Object, in radians. Default 0.
+             */
+            setRotation(radians?: number): this;
+
+            /**
+             * Sets the angle of this Game Object.
+             * @param degrees The rotation of this Game Object, in degrees. Default 0.
+             */
+            setAngle(degrees?: number): this;
+
+            /**
+             * Sets the scale of this Game Object.
+             * @param x The horizontal scale of this Game Object.
+             * @param y The vertical scale of this Game Object. If not set it will use the `x` value. Default x.
+             */
+            setScale(x: number, y?: number): this;
+
+            /**
+             * Sets the x position of this Game Object.
+             * @param value The x position of this Game Object. Default 0.
+             */
+            setX(value?: number): this;
+
+            /**
+             * Sets the y position of this Game Object.
+             * @param value The y position of this Game Object. Default 0.
+             */
+            setY(value?: number): this;
+
+            /**
+             * Sets the z position of this Game Object.
+             * @param value The z position of this Game Object. Default 0.
+             */
+            setZ(value?: number): this;
+
+            /**
+             * Sets the w position of this Game Object.
+             * @param value The w position of this Game Object. Default 0.
+             */
+            setW(value?: number): this;
+
+            /**
+             * Gets the local transform matrix for this Game Object.
+             * @param tempMatrix The matrix to populate with the values from this Game Object.
+             */
+            getLocalTransformMatrix(tempMatrix?: Phaser.GameObjects.Components.TransformMatrix): Phaser.GameObjects.Components.TransformMatrix;
+
+            /**
+             * Gets the world transform matrix for this Game Object, factoring in any parent Containers.
+             * @param tempMatrix The matrix to populate with the values from this Game Object.
+             * @param parentMatrix A temporary matrix to hold parent values during the calculations.
+             */
+            getWorldTransformMatrix(tempMatrix?: Phaser.GameObjects.Components.TransformMatrix, parentMatrix?: Phaser.GameObjects.Components.TransformMatrix): Phaser.GameObjects.Components.TransformMatrix;
+
+            /**
+             * The visible state of the Game Object.
+             * 
+             * An invisible Game Object will skip rendering, but will still process update logic.
+             */
+            visible: boolean;
+
+            /**
+             * Sets the visibility of this Game Object.
+             * 
+             * An invisible Game Object will skip rendering, but will still process update logic.
+             * @param value The visible state of the Game Object.
+             */
+            setVisible(value: boolean): this;
+
+            /**
+             * The horizontal scroll factor of this Game Object.
+             * 
+             * The scroll factor controls the influence of the movement of a Camera upon this Game Object.
+             * 
+             * When a camera scrolls it will change the location at which this Game Object is rendered on-screen.
+             * It does not change the Game Objects actual position values.
+             * 
+             * A value of 1 means it will move exactly in sync with a camera.
+             * A value of 0 means it will not move at all, even if the camera moves.
+             * Other values control the degree to which the camera movement is mapped to this Game Object.
+             * 
+             * Please be aware that scroll factor values other than 1 are not taken in to consideration when
+             * calculating physics collisions. Bodies always collide based on their world position, but changing
+             * the scroll factor is a visual adjustment to where the textures are rendered, which can offset
+             * them from physics bodies if not accounted for in your code.
+             */
+            scrollFactorX: number;
+
+            /**
+             * The vertical scroll factor of this Game Object.
+             * 
+             * The scroll factor controls the influence of the movement of a Camera upon this Game Object.
+             * 
+             * When a camera scrolls it will change the location at which this Game Object is rendered on-screen.
+             * It does not change the Game Objects actual position values.
+             * 
+             * A value of 1 means it will move exactly in sync with a camera.
+             * A value of 0 means it will not move at all, even if the camera moves.
+             * Other values control the degree to which the camera movement is mapped to this Game Object.
+             * 
+             * Please be aware that scroll factor values other than 1 are not taken in to consideration when
+             * calculating physics collisions. Bodies always collide based on their world position, but changing
+             * the scroll factor is a visual adjustment to where the textures are rendered, which can offset
+             * them from physics bodies if not accounted for in your code.
+             */
+            scrollFactorY: number;
+
+            /**
+             * Sets the scroll factor of this Game Object.
+             * 
+             * The scroll factor controls the influence of the movement of a Camera upon this Game Object.
+             * 
+             * When a camera scrolls it will change the location at which this Game Object is rendered on-screen.
+             * It does not change the Game Objects actual position values.
+             * 
+             * A value of 1 means it will move exactly in sync with a camera.
+             * A value of 0 means it will not move at all, even if the camera moves.
+             * Other values control the degree to which the camera movement is mapped to this Game Object.
+             * 
+             * Please be aware that scroll factor values other than 1 are not taken in to consideration when
+             * calculating physics collisions. Bodies always collide based on their world position, but changing
+             * the scroll factor is a visual adjustment to where the textures are rendered, which can offset
+             * them from physics bodies if not accounted for in your code.
+             * @param x The horizontal scroll factor of this Game Object.
+             * @param y The vertical scroll factor of this Game Object. If not set it will use the `x` value. Default x.
+             */
+            setScrollFactor(x: number, y?: number): this;
 
         }
 
@@ -36798,11 +37250,14 @@ declare namespace Phaser {
             function LineToRectangle(line: Phaser.Geom.Line, rect: Phaser.Geom.Rectangle | object): boolean;
 
             /**
-             * Checks if the given point falls between the two end-points of the line segment.
+             * Checks if the a Point falls between the two end-points of a Line, based on the given line thickness.
+             * 
+             * Assumes that the line end points are circular, not square.
              * @param point The point, or point-like object to check.
              * @param line The line segment to test for intersection on.
+             * @param lineThickness The line thickness. Assumes that the line end points are circular. Default 1.
              */
-            function PointToLine(point: Phaser.Geom.Point | any, line: Phaser.Geom.Line): boolean;
+            function PointToLine(point: Phaser.Geom.Point | any, line: Phaser.Geom.Line, lineThickness?: number): boolean;
 
             /**
              * Checks if a Point is located on the given line segment.
@@ -36932,6 +37387,14 @@ declare namespace Phaser {
             static GetMidPoint<O extends Phaser.Geom.Point>(line: Phaser.Geom.Line, out?: O): O;
 
             /**
+             * Get the nearest point on a line perpendicular to the given point.
+             * @param line The line to get the nearest point on.
+             * @param point The point to get the nearest point to.
+             * @param out An optional point, or point-like object, to store the coordinates of the nearest point on the line.
+             */
+            static GetNearestPoint<O extends Phaser.Geom.Point>(line: Phaser.Geom.Line, point: Phaser.Geom.Point | object, out?: O): O;
+
+            /**
              * Calculate the normal of the given line.
              * 
              * The normal of a line is a vector that points perpendicular from it.
@@ -36961,6 +37424,13 @@ declare namespace Phaser {
              * @param out An optional array of Points, or point-like objects, to store the coordinates of the points on the line.
              */
             static GetPoints<O extends Phaser.Geom.Point[]>(line: Phaser.Geom.Line, quantity: integer, stepRate?: number, out?: O): O;
+
+            /**
+             * Get the shortest distance from a Line to the given Point.
+             * @param line The line to get the distance from.
+             * @param point The point to get the shortest distance to.
+             */
+            static GetShortestDistance<O extends Phaser.Geom.Point>(line: Phaser.Geom.Line, point: Phaser.Geom.Point | object): O;
 
             /**
              * Calculate the height of the given line.
@@ -38817,9 +39287,9 @@ declare namespace Phaser {
             canvas: HTMLCanvasElement;
 
             /**
-             * The Input Configuration object, as set in the Game Config.
+             * The Game Configuration object, as set during the game boot.
              */
-            config: object;
+            config: Phaser.Boot.Config;
 
             /**
              * If set, the Input Manager will run its update loop every frame.
@@ -38835,6 +39305,12 @@ declare namespace Phaser {
              * A standard FIFO queue for the native DOM events waiting to be handled by the Input Manager.
              */
             queue: any[];
+
+            /**
+             * Are any mouse or touch pointers currently over the game canvas?
+             * This is updated automatically by the canvas over and out handlers.
+             */
+            readonly isOver: boolean;
 
             /**
              * The default CSS cursor to be used when interacting with your game.
@@ -39093,8 +39569,9 @@ declare namespace Phaser {
              * @param pointer The Pointer to transform the values for.
              * @param pageX The Page X value.
              * @param pageY The Page Y value.
+             * @param wasMove Are we transforming the Pointer from a move event, or an up / down event?
              */
-            transformPointer(pointer: Phaser.Input.Pointer, pageX: number, pageY: number): void;
+            transformPointer(pointer: Phaser.Input.Pointer, pageX: number, pageY: number, wasMove: boolean): void;
 
             /**
              * Transforms the pageX value into the scaled coordinate space of the Input Manager.
@@ -39605,6 +40082,11 @@ declare namespace Phaser {
              * This is only safe to use if your game has just 1 non-transformed camera and doesn't use multi-touch.
              */
             readonly y: number;
+
+            /**
+             * Are any mouse or touch pointers currently over the game canvas?
+             */
+            readonly isOver: boolean;
 
             /**
              * The mouse has its own unique Pointer object, which you can reference directly if making a _desktop specific game_.
@@ -40393,6 +40875,20 @@ declare namespace Phaser {
                 onMouseUp: Function;
 
                 /**
+                 * The Mouse Over Event handler.
+                 * This function is sent the native DOM MouseEvent.
+                 * Initially empty and bound in the `startListeners` method.
+                 */
+                onMouseOver: Function;
+
+                /**
+                 * The Mouse Out Event handler.
+                 * This function is sent the native DOM MouseEvent.
+                 * Initially empty and bound in the `startListeners` method.
+                 */
+                onMouseOut: Function;
+
+                /**
                  * Internal pointerLockChange handler.
                  * This function is sent the native DOM MouseEvent.
                  * Initially empty and bound in the `startListeners` method.
@@ -40512,17 +41008,75 @@ declare namespace Phaser {
             /**
              * The position of the Pointer in screen space.
              */
-            position: Phaser.Math.Vector2;
+            readonly position: Phaser.Math.Vector2;
 
             /**
              * The previous position of the Pointer in screen space.
              * 
              * The old x and y values are stored in here during the InputManager.transformPointer call.
              * 
-             * You can use it to track how fast the pointer is moving, or to smoothly interpolate between the old and current position.
-             * See the `Pointer.getInterpolatedPosition` method to assist in this.
+             * Use the properties `velocity`, `angle` and `distance` to create your own gesture recognition.
              */
-            prevPosition: Phaser.Math.Vector2;
+            readonly prevPosition: Phaser.Math.Vector2;
+
+            /**
+             * The current velocity of the Pointer, based on its current and previous positions.
+             * 
+             * This value is smoothed out each frame, according to the `motionFactor` property.
+             * 
+             * This property is updated whenever the Pointer moves, regardless of any button states. In other words,
+             * it changes based on movement alone - a button doesn't have to be pressed first.
+             */
+            readonly velocity: Phaser.Math.Vector2;
+
+            /**
+             * The current angle the Pointer is moving, in radians, based on its previous and current position.
+             * 
+             * The angle is based on the old position facing to the current position.
+             * 
+             * This property is updated whenever the Pointer moves, regardless of any button states. In other words,
+             * it changes based on movement alone - a button doesn't have to be pressed first.
+             */
+            readonly angle: number;
+
+            /**
+             * The distance the Pointer has moved, based on its previous and current position.
+             * 
+             * This value is smoothed out each frame, according to the `motionFactor` property.
+             * 
+             * This property is updated whenever the Pointer moves, regardless of any button states. In other words,
+             * it changes based on movement alone - a button doesn't have to be pressed first.
+             * 
+             * If you need the total distance travelled since the primary buttons was pressed down,
+             * then use the `Pointer.getDistance` method.
+             */
+            readonly distance: number;
+
+            /**
+             * The smoothing factor to apply to the Pointer position.
+             * 
+             * Due to their nature, pointer positions are inherently noisy. While this is fine for lots of games, if you need cleaner positions
+             * then you can set this value to apply an automatic smoothing to the positions as they are recorded.
+             * 
+             * The default value of zero means 'no smoothing'.
+             * Set to a small value, such as 0.2, to apply an average level of smoothing between positions. You can do this by changing this
+             * value directly, or by setting the `input.smoothFactor` property in the Game Config.
+             * 
+             * Positions are only smoothed when the pointer moves. If the primary button on this Pointer enters an Up or Down state, then the position
+             * is always precise, and not smoothed.
+             */
+            smoothFactor: number;
+
+            /**
+             * The factor applied to the motion smoothing each frame.
+             * 
+             * This value is passed to the Smooth Step Interpolation that is used to calculate the velocity,
+             * angle and distance of the Pointer. It's applied every frame, until the midPoint reaches the current
+             * position of the Pointer. 0.2 provides a good average but can be increased if you need a
+             * quicker update and are working in a high performance environment. Never set this value to
+             * zero.
+             */
+            motionFactor: number;
 
             /**
              * The x position of this Pointer, translated into the coordinate space of the most recent Camera it interacted with.
@@ -40533,6 +41087,11 @@ declare namespace Phaser {
              * The y position of this Pointer, translated into the coordinate space of the most recent Camera it interacted with.
              */
             worldY: number;
+
+            /**
+             * Time when this Pointer was most recently moved (regardless of the state of its buttons, if any)
+             */
+            moveTime: number;
 
             /**
              * X coordinate of the Pointer when Button 1 (left button), or Touch, was pressed, used for dragging objects.
@@ -40643,6 +41202,11 @@ declare namespace Phaser {
             active: boolean;
 
             /**
+             * Time when this Pointer was most recently updated by the Game step.
+             */
+            time: number;
+
+            /**
              * Takes a Camera and returns a Vector2 containing the translated position of this Pointer
              * within that Camera. This can be used to convert this Pointers position into camera space.
              * @param camera The Camera to use for the translation.
@@ -40681,10 +41245,57 @@ declare namespace Phaser {
             forwardButtonDown(): boolean;
 
             /**
-             * Returns the distance between the Pointer's current position and where it was
-             * first pressed down (the `downX` and `downY` properties)
+             * If the Pointer has a button pressed down at the time this method is called, it will return the
+             * distance between the Pointer's `downX` and `downY` values and the current position.
+             * 
+             * If no button is held down, it will return the last recorded distance, based on where
+             * the Pointer was when the button was released.
+             * 
+             * If you wish to get the distance being travelled currently, based on the velocity of the Pointer,
+             * then see the `Pointer.distance` property.
              */
             getDistance(): number;
+
+            /**
+             * If the Pointer has a button pressed down at the time this method is called, it will return the
+             * horizontal distance between the Pointer's `downX` and `downY` values and the current position.
+             * 
+             * If no button is held down, it will return the last recorded horizontal distance, based on where
+             * the Pointer was when the button was released.
+             */
+            getDistanceX(): number;
+
+            /**
+             * If the Pointer has a button pressed down at the time this method is called, it will return the
+             * vertical distance between the Pointer's `downX` and `downY` values and the current position.
+             * 
+             * If no button is held down, it will return the last recorded vertical distance, based on where
+             * the Pointer was when the button was released.
+             */
+            getDistanceY(): number;
+
+            /**
+             * If the Pointer has a button pressed down at the time this method is called, it will return the
+             * duration since the Pointer's was pressed down.
+             * 
+             * If no button is held down, it will return the last recorded duration, based on the time
+             * the Pointer button was released.
+             */
+            getDuration(): number;
+
+            /**
+             * If the Pointer has a button pressed down at the time this method is called, it will return the
+             * angle between the Pointer's `downX` and `downY` values and the current position.
+             * 
+             * If no button is held down, it will return the last recorded angle, based on where
+             * the Pointer was when the button was released.
+             * 
+             * The angle is based on the old position facing to the current position.
+             * 
+             * If you wish to get the current angle, based on the velocity of the Pointer, then
+             * see the `Pointer.angle` property.
+             */
+            getAngle(): number;
 
             /**
              * Takes the previous and current Pointer positions and then generates an array of interpolated values between
@@ -40793,6 +41404,18 @@ declare namespace Phaser {
                  * Initially empty and bound in the `startListeners` method.
                  */
                 onTouchCancel: Function;
+
+                /**
+                 * The Touch Over event handler function.
+                 * Initially empty and bound in the `startListeners` method.
+                 */
+                onTouchOver: Function;
+
+                /**
+                 * The Touch Out event handler function.
+                 * Initially empty and bound in the `startListeners` method.
+                 */
+                onTouchOut: Function;
 
                 /**
                  * Starts the Touch Event listeners running as long as an input target is set.
@@ -47110,12 +47733,10 @@ declare namespace Phaser {
     namespace Physics {
         namespace Arcade {
             /**
-             * An Arcade Physics Image Game Object.
+             * An Arcade Physics Image is an Image with an Arcade Physics body and related components.
+             * The body can be dynamic or static.
              * 
-             * An Image is a light-weight Game Object useful for the display of static images in your game,
-             * such as logos, backgrounds, scenery or other non-animated elements. Images can have input
-             * events and physics bodies, or be tweened, tinted or scrolled. The main difference between an
-             * Image and a Sprite is that you cannot animate an Image as they do not have the Animation component.
+             * The main difference between an Arcade Image and an Arcade Sprite is that you cannot animate an Arcade Image.
              */
             class Image extends Phaser.GameObjects.Image implements Phaser.Physics.Arcade.Components.Acceleration, Phaser.Physics.Arcade.Components.Angular, Phaser.Physics.Arcade.Components.Bounce, Phaser.Physics.Arcade.Components.Debug, Phaser.Physics.Arcade.Components.Drag, Phaser.Physics.Arcade.Components.Enable, Phaser.Physics.Arcade.Components.Friction, Phaser.Physics.Arcade.Components.Gravity, Phaser.Physics.Arcade.Components.Immovable, Phaser.Physics.Arcade.Components.Mass, Phaser.Physics.Arcade.Components.Size, Phaser.Physics.Arcade.Components.Velocity, Phaser.GameObjects.Components.Alpha, Phaser.GameObjects.Components.BlendMode, Phaser.GameObjects.Components.Depth, Phaser.GameObjects.Components.Flip, Phaser.GameObjects.Components.GetBounds, Phaser.GameObjects.Components.Origin, Phaser.GameObjects.Components.Pipeline, Phaser.GameObjects.Components.ScaleMode, Phaser.GameObjects.Components.ScrollFactor, Phaser.GameObjects.Components.Size, Phaser.GameObjects.Components.Texture, Phaser.GameObjects.Components.Tint, Phaser.GameObjects.Components.Transform, Phaser.GameObjects.Components.Visible {
                 /**
@@ -48427,15 +49048,11 @@ declare namespace Phaser {
             }
 
             /**
-             * An Arcade Physics Sprite Game Object.
+             * An Arcade Physics Sprite is a Sprite with an Arcade Physics body and related components.
+             * The body can be dynamic or static.
              * 
-             * A Sprite Game Object is used for the display of both static and animated images in your game.
-             * Sprites can have input events and physics bodies. They can also be tweened, tinted, scrolled
-             * and animated.
-             * 
-             * The main difference between a Sprite and an Image Game Object is that you cannot animate Images.
-             * As such, Sprites take a fraction longer to process and have a larger API footprint due to the Animation
-             * Component. If you do not require animation then you can safely use Images to replace Sprites in all cases.
+             * The main difference between an Arcade Sprite and an Arcade Image is that you cannot animate an Arcade Image.
+             * If you do not require animation then you can safely use Arcade Images instead of Arcade Sprites.
              */
             class Sprite extends Phaser.GameObjects.Sprite implements Phaser.Physics.Arcade.Components.Acceleration, Phaser.Physics.Arcade.Components.Angular, Phaser.Physics.Arcade.Components.Bounce, Phaser.Physics.Arcade.Components.Debug, Phaser.Physics.Arcade.Components.Drag, Phaser.Physics.Arcade.Components.Enable, Phaser.Physics.Arcade.Components.Friction, Phaser.Physics.Arcade.Components.Gravity, Phaser.Physics.Arcade.Components.Immovable, Phaser.Physics.Arcade.Components.Mass, Phaser.Physics.Arcade.Components.Size, Phaser.Physics.Arcade.Components.Velocity, Phaser.GameObjects.Components.Alpha, Phaser.GameObjects.Components.BlendMode, Phaser.GameObjects.Components.Depth, Phaser.GameObjects.Components.Flip, Phaser.GameObjects.Components.GetBounds, Phaser.GameObjects.Components.Origin, Phaser.GameObjects.Components.Pipeline, Phaser.GameObjects.Components.ScaleMode, Phaser.GameObjects.Components.ScrollFactor, Phaser.GameObjects.Components.Size, Phaser.GameObjects.Components.Texture, Phaser.GameObjects.Components.Tint, Phaser.GameObjects.Components.Transform, Phaser.GameObjects.Components.Visible {
                 /**
@@ -49884,7 +50501,7 @@ declare namespace Phaser {
                 overlapR: number;
 
                 /**
-                 * Whether this Body is overlapped with another and both have zero velocity.
+                 * Whether this Body is overlapped with another and both are not moving.
                  */
                 embedded: boolean;
 
@@ -49935,7 +50552,8 @@ declare namespace Phaser {
                 readonly physicsType: integer;
 
                 /**
-                 * Updates this Body's transform, dimensions, and position from its Game Object.
+                 * Updates the Body's `transform`, `width`, `height`, and `center` from its Game Object.
+                 * The Body's `position` isn't changed.
                  */
                 updateBounds(): void;
 
@@ -49946,7 +50564,7 @@ declare namespace Phaser {
 
                 /**
                  * Updates the Body.
-                 * @param delta The delta time, in ms, elapsed since the last frame.
+                 * @param delta The delta time, in seconds, elapsed since the last frame.
                  */
                 update(delta: number): void;
 
@@ -50306,7 +50924,7 @@ declare namespace Phaser {
                 world: Phaser.Physics.Arcade.World;
 
                 /**
-                 * The name of the collider (unused by phaser).
+                 * The name of the collider (unused by Phaser).
                  */
                 name: string;
 
@@ -50785,7 +51403,7 @@ declare namespace Phaser {
                 sys: Phaser.Scenes.Systems;
 
                 /**
-                 * Create a new Arcade Physics Collider object.
+                 * Creates a new Arcade Physics Collider object.
                  * @param object1 The first object to check for collision.
                  * @param object2 The second object to check for collision.
                  * @param collideCallback The callback to invoke when the two objects collide.
@@ -50795,7 +51413,7 @@ declare namespace Phaser {
                 collider(object1: Phaser.GameObjects.GameObject | Phaser.GameObjects.GameObject[] | Phaser.GameObjects.Group | Phaser.GameObjects.Group[], object2: Phaser.GameObjects.GameObject | Phaser.GameObjects.GameObject[] | Phaser.GameObjects.Group | Phaser.GameObjects.Group[], collideCallback?: ArcadePhysicsCallback, processCallback?: ArcadePhysicsCallback, callbackContext?: any): Phaser.Physics.Arcade.Collider;
 
                 /**
-                 * Create a new Arcade Physics Collider Overlap object.
+                 * Creates a new Arcade Physics Collider Overlap object.
                  * @param object1 The first object to check for overlap.
                  * @param object2 The second object to check for overlap.
                  * @param collideCallback The callback to invoke when the two objects collide.
@@ -51107,9 +51725,10 @@ declare namespace Phaser {
                 readonly bounce: Phaser.Math.Vector2;
 
                 /**
-                 * Whether the simulation emits a `worldbounds` event when this StaticBody collides with the world boundary (and `collideWorldBounds` is also true).
+                 * Whether the simulation emits a `worldbounds` event when this StaticBody collides with the world boundary.
+                 * Always false for a Static Body. (Static Bodies never collide with the world boundary and never trigger a `worldbounds` event.)
                  */
-                onWorldBounds: boolean;
+                readonly onWorldBounds: boolean;
 
                 /**
                  * Whether the simulation emits a `collide` event when this StaticBody collides with another.
@@ -51132,12 +51751,12 @@ declare namespace Phaser {
                 immovable: boolean;
 
                 /**
-                 * A flag disabling the default horizontal separation of colliding bodies. Pass your own `processHandler` to the collider.
+                 * A flag disabling the default horizontal separation of colliding bodies. Pass your own `collideHandler` to the collider.
                  */
                 customSeparateX: boolean;
 
                 /**
-                 * A flag disabling the default vertical separation of colliding bodies. Pass your own `processHandler` to the collider.
+                 * A flag disabling the default vertical separation of colliding bodies. Pass your own `collideHandler` to the collider.
                  */
                 customSeparateY: boolean;
 
@@ -51157,14 +51776,15 @@ declare namespace Phaser {
                 overlapR: number;
 
                 /**
-                 * Whether this StaticBody is overlapped with another and both have zero velocity.
+                 * Whether this StaticBody has ever overlapped with another while both were not moving.
                  */
                 embedded: boolean;
 
                 /**
                  * Whether this StaticBody interacts with the world boundary.
+                 * Always false for a Static Body. (Static Bodies never collide with the world boundary.)
                  */
-                collideWorldBounds: boolean;
+                readonly collideWorldBounds: boolean;
 
                 /**
                  * Whether this StaticBody is checked for collisions and for which directions. You can set `checkCollision.none = false` to disable collision checks.
@@ -51172,17 +51792,17 @@ declare namespace Phaser {
                 checkCollision: ArcadeBodyCollision;
 
                 /**
-                 * Whether this StaticBody is colliding with another and in which direction.
+                 * Whether this StaticBody has ever collided with another body and in which direction.
                  */
                 touching: ArcadeBodyCollision;
 
                 /**
-                 * Whether this StaticBody was colliding with another during the last step, and in which direction.
+                 * Whether this StaticBody was colliding with another body during the last step or any previous step, and in which direction.
                  */
                 wasTouching: ArcadeBodyCollision;
 
                 /**
-                 * Whether this StaticBody is colliding with a tile or the world boundary.
+                 * Whether this StaticBody has ever collided with a tile or the world boundary.
                  */
                 blocked: ArcadeBodyCollision;
 
@@ -51847,8 +52467,8 @@ declare namespace Phaser {
                 protected update(time: number, delta: number): void;
 
                 /**
-                 * Advances the simulation by one step.
-                 * @param delta The delta time amount, in ms, by which to advance the simulation.
+                 * Advances the simulation by a time increment.
+                 * @param delta The delta time amount, in seconds, by which to advance the simulation.
                  */
                 step(delta: number): void;
 
@@ -51860,21 +52480,21 @@ declare namespace Phaser {
                 /**
                  * Calculates a Body's velocity and updates its position.
                  * @param body The Body to be updated.
-                 * @param delta The delta value to be used in the motion calculations.
+                 * @param delta The delta value to be used in the motion calculations, in seconds.
                  */
                 updateMotion(body: Phaser.Physics.Arcade.Body, delta: number): void;
 
                 /**
                  * Calculates a Body's angular velocity.
                  * @param body The Body to compute the velocity for.
-                 * @param delta The delta value to be used in the calculation.
+                 * @param delta The delta value to be used in the calculation, in seconds.
                  */
                 computeAngularVelocity(body: Phaser.Physics.Arcade.Body, delta: number): void;
 
                 /**
                  * Calculates a Body's per-axis velocity.
                  * @param body The Body to compute the velocity for.
-                 * @param delta The delta value to be used in the calculation.
+                 * @param delta The delta value to be used in the calculation, in seconds.
                  */
                 computeVelocity(body: Phaser.Physics.Arcade.Body, delta: number): void;
 
@@ -65512,10 +66132,8 @@ declare namespace Phaser {
              * single numeric index or an array of indexes: [2, 3, 15, 20]. The `collides` parameter controls if
              * collision will be enabled (true) or disabled (false).
              * @param indexes Either a single tile index, or an array of tile indexes.
-             * @param collides If true it will enable collision. If false it will clear
-             * collision. Default true.
-             * @param recalculateFaces Whether or not to recalculate the tile faces after the
-             * update. Default true.
+             * @param collides If true it will enable collision. If false it will clear collision. Default true.
+             * @param recalculateFaces Whether or not to recalculate the tile faces after the update. Default true.
              */
             setCollision(indexes: integer | any[], collides?: boolean, recalculateFaces?: boolean): Phaser.Tilemaps.DynamicTilemapLayer;
 
@@ -65526,10 +66144,8 @@ declare namespace Phaser {
              * enabled (true) or disabled (false).
              * @param start The first index of the tile to be set for collision.
              * @param stop The last index of the tile to be set for collision.
-             * @param collides If true it will enable collision. If false it will clear
-             * collision. Default true.
-             * @param recalculateFaces Whether or not to recalculate the tile faces after the
-             * update. Default true.
+             * @param collides If true it will enable collision. If false it will clear collision. Default true.
+             * @param recalculateFaces Whether or not to recalculate the tile faces after the update. Default true.
              */
             setCollisionBetween(start: integer, stop: integer, collides?: boolean, recalculateFaces?: boolean): Phaser.Tilemaps.DynamicTilemapLayer;
 
@@ -65541,12 +66157,9 @@ declare namespace Phaser {
              * has a value of true. Any tile that doesn't have "collides" set to true will be ignored. You can
              * also use an array of values, e.g. `{ types: ["stone", "lava", "sand" ] }`. If a tile has a
              * "types" property that matches any of those values, its collision flag will be updated.
-             * @param properties An object with tile properties and corresponding values that should
-             * be checked.
-             * @param collides If true it will enable collision. If false it will clear
-             * collision. Default true.
-             * @param recalculateFaces Whether or not to recalculate the tile faces after the
-             * update. Default true.
+             * @param properties An object with tile properties and corresponding values that should be checked.
+             * @param collides If true it will enable collision. If false it will clear collision. Default true.
+             * @param recalculateFaces Whether or not to recalculate the tile faces after the update. Default true.
              */
             setCollisionByProperty(properties: object, collides?: boolean, recalculateFaces?: boolean): Phaser.Tilemaps.DynamicTilemapLayer;
 
@@ -65555,10 +66168,8 @@ declare namespace Phaser {
              * the given array. The `collides` parameter controls if collision will be enabled (true) or
              * disabled (false).
              * @param indexes An array of the tile indexes to not be counted for collision.
-             * @param collides If true it will enable collision. If false it will clear
-             * collision. Default true.
-             * @param recalculateFaces Whether or not to recalculate the tile faces after the
-             * update. Default true.
+             * @param collides If true it will enable collision. If false it will clear collision. Default true.
+             * @param recalculateFaces Whether or not to recalculate the tile faces after the update. Default true.
              */
             setCollisionByExclusion(indexes: integer[], collides?: boolean, recalculateFaces?: boolean): Phaser.Tilemaps.DynamicTilemapLayer;
 
@@ -65567,10 +66178,8 @@ declare namespace Phaser {
              * (typically defined in Tiled within the tileset collision editor). If any objects are found within
              * a tiles collision group, the tile's colliding information will be set. The `collides` parameter
              * controls if collision will be enabled (true) or disabled (false).
-             * @param collides If true it will enable collision. If false it will clear
-             * collision. Default true.
-             * @param recalculateFaces Whether or not to recalculate the tile faces after the
-             * update. Default true.
+             * @param collides If true it will enable collision. If false it will clear collision. Default true.
+             * @param recalculateFaces Whether or not to recalculate the tile faces after the update. Default true.
              */
             setCollisionFromCollisionGroup(collides?: boolean, recalculateFaces?: boolean): Phaser.Tilemaps.DynamicTilemapLayer;
 
@@ -65579,8 +66188,7 @@ declare namespace Phaser {
              * tiles on this layer that have the same index. If a callback is already set for the tile index it
              * will be replaced. Set the callback to null to remove it. If you want to set a callback for a tile
              * at a specific location on the map then see setTileLocationCallback.
-             * @param indexes Either a single tile index, or an array of tile indexes to have a
-             * collision callback set for.
+             * @param indexes Either a single tile index, or an array of tile indexes to have a collision callback set for.
              * @param callback The callback that will be invoked when the tile is collided with.
              * @param callbackContext The context under which the callback is called.
              */
@@ -68313,8 +68921,9 @@ declare namespace Phaser {
             readonly hasInterestingFace: boolean;
 
             /**
-             * The tileset that contains this Tile. This will only return null if accessed from a LayerData
-             * instance before the tile is placed within a StaticTilemapLayer or DynamicTilemapLayer.
+             * The tileset that contains this Tile. This is null if accessed from a LayerData instance
+             * before the tile is placed in a StaticTilemapLayer or DynamicTilemapLayer, or if the tile has
+             * an index that doesn't correspond to any of the map's tilesets.
              */
             readonly tileset: Phaser.Tilemaps.Tileset;
 
@@ -73532,6 +74141,18 @@ declare class SpinePlugin extends Phaser.Plugins.ScenePlugin {
      * @param pluginManager A reference to the Phaser Plugin Manager.
      */
     constructor(scene: Phaser.Scene, pluginManager: Phaser.Plugins.PluginManager);
+
+    /**
+     * Gets the spine runtime.
+     */
+    getRuntime(): any;
+
+    /**
+     * Creates a spine Skeleton
+     * @param key The key of the atlas Texture this Game Object will use to render with, as stored in the Texture Manager.
+     * @param skeletonJSON The animation to load with.
+     */
+    createSkeleton(key: string, skeletonJSON?: string): any;
 
 }
 
