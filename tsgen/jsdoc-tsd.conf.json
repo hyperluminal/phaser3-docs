@@ -2,10 +2,6 @@
     "tags": {
         "allowUnknownTags": true
     },
-    "markdown"  : {
-        "parser"   : "gfm",
-        "hardwrap" : true
-    },
     "source": {
         "include": [
             "../../phaser/src/",
@@ -14,9 +10,14 @@
 
         ],
         "exclude": [
+            "../../phaser/src/phaser-arcade-physics.js",
+            "../../phaser/src/phaser-core.js",
+            "../../phaser/src/physics/matter-js/poly-decomp/",
             "../../phaser/src/physics/matter-js/lib",
-            "../../phaser/src/physics/matter-js/poly-decomp",
             "../../phaser/src/polyfills",
+            "../../phaser/src/core/CreateDOMContainer.js",
+            "../../phaser/src/gameobjects/domelement/",
+            
             "../../phaser/plugins/spine/src/runtimes"
         ],
         "includePattern": ".+\\.js?$",
